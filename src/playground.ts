@@ -8,6 +8,8 @@ import { Logger } from "@babylonjs/core/Misc/logger";
 import { Scene } from "@babylonjs/core/scene";
 import "@babylonjs/core/Materials/standardMaterial";
 
+import { runMultichannelRnD } from "./r+d/multichannel";
+
 class Playground {
     public static CreateScene(engine: Engine, canvas: HTMLCanvasElement): Scene {
         // This creates a basic Babylon Scene object (non-mesh)
@@ -62,39 +64,41 @@ class Playground {
             camera.radius = Math.min(Math.max(5, camera.radius), 100);
         });
 
-        const audioEngine = new WebAudioEngine();
+        // const audioEngine = new WebAudioEngine();
 
-        const sound1 = new Sound("Sound 1", {
-            sourceUrl: "https://amf-ms.github.io/AudioAssets/testing/mp3.mp3",
-            priority: 1
-        });
+        // const sound1 = new Sound("Sound 1", {
+        //     sourceUrl: "https://amf-ms.github.io/AudioAssets/testing/mp3.mp3",
+        //     priority: 1
+        // });
 
-        const sound2 = new Sound("Sound 2", {
-            sourceUrl: "https://amf-ms.github.io/AudioAssets/testing/ogg.ogg",
-            priority: 2
-        });
+        // const sound2 = new Sound("Sound 2", {
+        //     sourceUrl: "https://amf-ms.github.io/AudioAssets/testing/ogg.ogg",
+        //     priority: 2
+        // });
 
-        const sound3 = new Sound("Sound 3",{
-            sourceUrl: "https://amf-ms.github.io/AudioAssets/testing/ac3.ac3",
-            priority: 3
-        });
+        // const sound3 = new Sound("Sound 3",{
+        //     sourceUrl: "https://amf-ms.github.io/AudioAssets/testing/ac3.ac3",
+        //     priority: 3
+        // });
 
-        const sound4 = new Sound("Sound 4", {
-            sourceUrl: "https://amf-ms.github.io/AudioAssets/testing/3-count.mp3",
-            priority: 4
-        });
+        // const sound4 = new Sound("Sound 4", {
+        //     sourceUrl: "https://amf-ms.github.io/AudioAssets/testing/3-count.mp3",
+        //     priority: 4
+        // });
 
-        sound1.play();
-        sound2.play();
-        sound3.play();
-        sound4.play();
+        // sound1.play();
+        // sound2.play();
+        // sound3.play();
+        // sound4.play();
 
-        audioEngine.update();
+        // audioEngine.update();
 
-        setTimeout(() => {
-            sound4.stop();
-            audioEngine.update();
-        }, 100);
+        // setTimeout(() => {
+        //     sound4.stop();
+        //     audioEngine.update();
+        // }, 100);
+
+        runMultichannelRnD();
 
         return scene;
     }
