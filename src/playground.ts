@@ -1,4 +1,3 @@
-import { WebAudioEngine, Sound } from "@babylonjs/core/Audio/v2/logical";
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import { Engine } from "@babylonjs/core/Engines/engine";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
@@ -8,7 +7,7 @@ import { Logger } from "@babylonjs/core/Misc/logger";
 import { Scene } from "@babylonjs/core/scene";
 import "@babylonjs/core/Materials/standardMaterial";
 
-import { runMultichannelRnD } from "./r+d/multichannel";
+import * as BasicWebAudioTests from "./basicWebAudioTests";
 
 class Playground {
     public static CreateScene(engine: Engine, canvas: HTMLCanvasElement): Scene {
@@ -64,41 +63,7 @@ class Playground {
             camera.radius = Math.min(Math.max(5, camera.radius), 100);
         });
 
-        // const audioEngine = new WebAudioEngine();
-
-        // const sound1 = new Sound("Sound 1", {
-        //     sourceUrl: "https://amf-ms.github.io/AudioAssets/testing/mp3.mp3",
-        //     priority: 1
-        // });
-
-        // const sound2 = new Sound("Sound 2", {
-        //     sourceUrl: "https://amf-ms.github.io/AudioAssets/testing/ogg.ogg",
-        //     priority: 2
-        // });
-
-        // const sound3 = new Sound("Sound 3",{
-        //     sourceUrl: "https://amf-ms.github.io/AudioAssets/testing/ac3.ac3",
-        //     priority: 3
-        // });
-
-        // const sound4 = new Sound("Sound 4", {
-        //     sourceUrl: "https://amf-ms.github.io/AudioAssets/testing/3-count.mp3",
-        //     priority: 4
-        // });
-
-        // sound1.play();
-        // sound2.play();
-        // sound3.play();
-        // sound4.play();
-
-        // audioEngine.update();
-
-        // setTimeout(() => {
-        //     sound4.stop();
-        //     audioEngine.update();
-        // }, 100);
-
-        runMultichannelRnD();
+        BasicWebAudioTests.run();
 
         return scene;
     }
@@ -109,7 +74,7 @@ declare var dat: any;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 (() => {
-    const canvas = <HTMLCanvasElement> document.getElementById("renderCanvas");
+    const canvas = <HTMLCanvasElement> (document.getElementById("renderCanvas") as unknown);
     const engine = new Engine(canvas, true);
     const scene = Playground.CreateScene(engine, canvas);
 
