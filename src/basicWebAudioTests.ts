@@ -42,7 +42,7 @@ async function test_3(): Promise<void> {
     const engine = await CreateAudioEngine({ audioContext });
 
     return new Promise<void>((resolve) => {
-        engine.createSound("", { sourceUrl: testSoundUrl}).then(async (sound) => {;
+        engine.createSound("", { sourceUrl: testSoundUrl }).then(async (sound) => {
             sound.play();
             await soundEnded(sound);
             console.log("test_3 - done");
