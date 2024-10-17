@@ -30,7 +30,53 @@ export async function run() {
     await test_1();
     await test_2();
     await test_3();
+    await test_4();
+    await test_5();
     console.log("All tests done.");
+}
+
+/**
+ * Create sound, call `play` on it twice, and call `stop` on it.
+ *
+ * Should start two sound instances 500ms apart and stop them after the second "zero" is spoken.
+ */
+async function test_5(): Promise<void> {
+    console.log("test_5 ...");
+
+    const engine = await CreateAudioEngine({ audioContext });
+    const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
+    await sound.play();
+
+    setTimeout(() => {
+        sound.play();
+    }, 500);
+
+    setTimeout(() => {
+        sound.stop();
+    }, 1200);
+
+    await soundEnded(sound);
+    console.log("test_5 - done");
+}
+
+/**
+ * Create sound and call `play` on it twice.
+ *
+ * Should start two sound instances 500ms apart.
+ */
+async function test_4(): Promise<void> {
+    console.log("test_4 ...");
+
+    const engine = await CreateAudioEngine({ audioContext });
+    const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
+    await sound.play();
+
+    setTimeout(() => {
+        sound.play();
+    }, 500);
+
+    await soundEnded(sound);
+    console.log("test_4 - done");
 }
 
 /**
