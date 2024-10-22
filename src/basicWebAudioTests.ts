@@ -5,6 +5,29 @@ import { CreateAudioEngine } from "@babylonjs/core/Audio/v2/webAudio/webAudioEng
 const reuseAudioContext = true;
 const testSoundUrl = "https://amf-ms.github.io/AudioAssets/testing/3-count.mp3";
 
+const logSpeechTextResults = false;
+
+declare var webkitSpeechRecognition: any;
+declare var SpeechRecognition: any;
+
+function createSpeechToTextConverter(): any {
+    if (webkitSpeechRecognition) {
+        return new webkitSpeechRecognition();
+    }
+    if (SpeechRecognition) {
+        return new SpeechRecognition();
+    }
+    return null;
+}
+
+async function wait(seconds: number): Promise<void> {
+    return new Promise<void>((resolve) => {
+        setTimeout(() => {
+            resolve();
+        }, seconds * 1000);
+    });
+}
+
 let audioContext: AudioContext | undefined = undefined;
 if (reuseAudioContext) {
     audioContext = new AudioContext();
@@ -26,22 +49,249 @@ async function soundInstanceEnded(soundInstance: AbstractSoundInstance): Promise
     });
 }
 
+let speechToText: any;
+let currentTest = "";
+let sttOutput = "";
+
+async function assertSpeechEquals(expected: string): Promise<void> {
+    // Wait a couple seconds for the speech to text API to finish processing.
+    await wait(1);
+
+    speechToText.stop();
+    sttOutput = sttOutput.replace(/\s+/g, "");
+
+    if (logSpeechTextResults) {
+        console.log("final sttOutput:", sttOutput);
+    }
+
+    if (sttOutput === expected) {
+        console.log(`${currentTest} passed.`);
+    } else {
+        console.warn(`${currentTest} failed. Expected: "${expected}", Got: "${sttOutput}"`);
+    }
+}
+
+function startTest(name: string): void {
+    console.log("");
+    console.log(`${name} ...`);
+    currentTest = name;
+
+    speechToText = createSpeechToTextConverter();
+    speechToText.lang = "en-US";
+    speechToText.continuous = true;
+    speechToText.interimResults = true;
+
+    const onResult = (event: any) => {
+        sttOutput = "";
+        for (let i = 0; i < event.results.length; ++i) {
+            const text = event.results[i][0].transcript;
+            sttOutput += text;
+        }
+        if (logSpeechTextResults) {
+            console.log("sttOutput:", sttOutput);
+        }
+    };
+
+    speechToText.addEventListener("result", onResult);
+
+    speechToText.start();
+}
+
+function endTest(): void {
+    console.log(`${currentTest} - done`);
+}
+
 export async function run() {
     await test_1();
     await test_2();
     await test_3();
     await test_4();
     await test_5();
+    await test_6();
+    await test_7();
+    await test_8();
+    await test_9();
+    await test_10();
+    await test_11();
+    await test_12();
+    await test_13();
+    await test_14();
+
+    console.log("");
     console.log("All tests done.");
+
+    // speechToText.stop();
+    // speechToText.removeEventListener("result", onResult);
+}
+
+/**
+ * Play sound and call stop with waitTime set to 1.5.
+ */
+async function test_14(): Promise<void> {
+    startTest("test_14");
+
+    const engine = await CreateAudioEngine({ audioContext });
+    const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
+    await sound.play();
+    sound.stop(1.5);
+
+    await soundEnded(sound);
+
+    await assertSpeechEquals("01");
+
+    endTest();
+}
+
+/**
+ * Play sound with duration set to 2.2.
+ */
+async function test_13(): Promise<void> {
+    startTest("test_13");
+
+    const engine = await CreateAudioEngine({ audioContext });
+    const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
+    await sound.play(null, null, 2.2);
+
+    await soundEnded(sound);
+
+    await assertSpeechEquals("01");
+
+    endTest();
+}
+
+/**
+ * Play sound with startOffset set to 1.0.
+ */
+async function test_12(): Promise<void> {
+    startTest("test_12");
+
+    const engine = await CreateAudioEngine({ audioContext });
+    const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
+    await sound.play(null, 1);
+
+    await soundEnded(sound);
+
+    await assertSpeechEquals("12");
+
+    endTest();
+}
+
+/**
+ * Play two sounds, with the second sound's play waitTime set to 1.5.
+ */
+async function test_11(): Promise<void> {
+    startTest("test_11");
+
+    const engine = await CreateAudioEngine({ audioContext });
+    const sound1 = await engine.createSound("", { sourceUrl: testSoundUrl });
+    sound1.play();
+    sound1.play(1.5);
+
+    await soundEnded(sound1);
+
+    await assertSpeechEquals("010212");
+
+    endTest();
+}
+
+/**
+ * Create sound with playbackRate set to 1.05 and pitch set to 200.
+ */
+async function test_10(): Promise<void> {
+    startTest("test_10");
+
+    const engine = await CreateAudioEngine({ audioContext });
+    const sound = await engine.createSound("", { sourceUrl: testSoundUrl, playbackRate: 1.05, pitch: 200 });
+    await sound.play();
+
+    await soundEnded(sound);
+
+    await assertSpeechEquals("012");
+
+    endTest();
+}
+
+/**
+ * Create sound with playbackRate set to 1.2.
+ */
+async function test_9(): Promise<void> {
+    startTest("test_9");
+
+    const engine = await CreateAudioEngine({ audioContext });
+    const sound = await engine.createSound("", { sourceUrl: testSoundUrl, playbackRate: 1.2 });
+    await sound.play();
+
+    await soundEnded(sound);
+
+    await assertSpeechEquals("012");
+
+    endTest();
+}
+
+/**
+ * Create sound with pitch set to 200.
+ */
+async function test_8(): Promise<void> {
+    startTest("test_8");
+
+    const engine = await CreateAudioEngine({ audioContext });
+    const sound = await engine.createSound("", { sourceUrl: testSoundUrl, pitch: 300 });
+    await sound.play();
+
+    await soundEnded(sound);
+
+    await assertSpeechEquals("012");
+
+    endTest();
+}
+
+/**
+ * Create sound with loop set to true, loopStart to 1 and loopEnd to 2.
+ */
+async function test_7(): Promise<void> {
+    startTest("test_7");
+
+    const engine = await CreateAudioEngine({ audioContext });
+    const sound = await engine.createSound("", { sourceUrl: testSoundUrl, loop: true, loopStart: 1, loopEnd: 2 });
+    await sound.play();
+
+    setTimeout(() => {
+        sound.stop();
+    }, 3200);
+
+    await soundEnded(sound);
+
+    await assertSpeechEquals("011");
+
+    endTest();
+}
+
+/**
+ * Create sound with loop set to true.
+ */
+async function test_6(): Promise<void> {
+    startTest("test_6");
+
+    const engine = await CreateAudioEngine({ audioContext });
+    const sound = await engine.createSound("", { sourceUrl: testSoundUrl, loop: true });
+    await sound.play();
+
+    setTimeout(() => {
+        sound.stop();
+    }, 4200);
+
+    await soundEnded(sound);
+
+    await assertSpeechEquals("0120");
+
+    endTest();
 }
 
 /**
  * Create sound, call `play` on it twice, and call `stop` on it.
- *
- * Should start two sound instances 500ms apart and stop them after the second "zero" is spoken.
  */
 async function test_5(): Promise<void> {
-    console.log("test_5 ...");
+    startTest("test_5");
 
     const engine = await CreateAudioEngine({ audioContext });
     const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
@@ -56,16 +306,20 @@ async function test_5(): Promise<void> {
     }, 1200);
 
     await soundEnded(sound);
-    console.log("test_5 - done");
+
+    // Wait a little longer for the speech to text API to finish processing so the "00" is separated into " 0 0".
+    await wait(0.5);
+
+    await assertSpeechEquals("00");
+
+    endTest();
 }
 
 /**
  * Create sound and call `play` on it twice.
- *
- * Should start two sound instances 500ms apart.
  */
 async function test_4(): Promise<void> {
-    console.log("test_4 ...");
+    startTest("test_4");
 
     const engine = await CreateAudioEngine({ audioContext });
     const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
@@ -76,22 +330,28 @@ async function test_4(): Promise<void> {
     }, 500);
 
     await soundEnded(sound);
-    console.log("test_4 - done");
+
+    await assertSpeechEquals("001122");
+
+    endTest();
 }
 
 /**
  * Create sound and call `play` on it using `then`.
  */
 async function test_3(): Promise<void> {
-    console.log("test_3 ...");
+    startTest("test_3");
 
     const engine = await CreateAudioEngine({ audioContext });
 
     return new Promise<void>((resolve) => {
         engine.createSound("", { sourceUrl: testSoundUrl }).then(async (sound) => {
-            sound.play();
+            await sound.play();
             await soundEnded(sound);
-            console.log("test_3 - done");
+
+            await assertSpeechEquals("012");
+
+            endTest();
             resolve();
         });
     });
@@ -101,25 +361,29 @@ async function test_3(): Promise<void> {
  * Create sound and call `play` on it using `await`.
  */
 async function test_2(): Promise<void> {
-    console.log("test_2 ...");
+    startTest("test_2");
 
     const engine = await CreateAudioEngine({ audioContext });
     const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
     const instance = await sound.play();
     await soundInstanceEnded(instance);
 
-    console.log("test_2 - done");
+    await assertSpeechEquals("012");
+
+    endTest();
 }
 
 /**
  * Create sound with `autoplay` option set.
  */
 async function test_1(): Promise<void> {
-    console.log("test_1 ...");
+    startTest("test_1");
 
     const engine = await CreateAudioEngine({ audioContext });
     const sound = await engine.createSound("", { sourceUrl: testSoundUrl, autoplay: true });
     await soundEnded(sound);
 
-    console.log("test_1 - done");
+    await assertSpeechEquals("012");
+
+    endTest();
 }
