@@ -54,8 +54,8 @@ let currentTest = "";
 let sttOutput = "";
 
 async function assertSpeechEquals(expected: string): Promise<void> {
-    // Wait a couple seconds for the speech to text API to finish processing.
-    await wait(1);
+    // Wait for the speech to text API to finish processing.
+    await wait(0.75);
 
     speechToText.stop();
     sttOutput = sttOutput.replace(/\s+/g, "");
@@ -306,9 +306,6 @@ async function test_5(): Promise<void> {
     }, 1200);
 
     await soundEnded(sound);
-
-    // Wait a little longer for the speech to text API to finish processing so the "00" is separated into " 0 0".
-    await wait(0.5);
 
     await assertSpeechEquals("00");
 
