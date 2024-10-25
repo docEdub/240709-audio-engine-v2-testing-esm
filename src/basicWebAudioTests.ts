@@ -2,10 +2,12 @@ import { AbstractSound } from "@babylonjs/core/Audio/v2/abstractSound";
 import { AbstractSoundInstance } from "@babylonjs/core/Audio/v2/abstractSoundInstance";
 import { CreateAudioEngine } from "@babylonjs/core/Audio/v2/webAudio/webAudioEngine";
 
+const logSpeechTextResults = false;
+
 const reuseAudioContext = true;
 const testSoundUrl = "https://amf-ms.github.io/AudioAssets/testing/3-count.mp3";
-
-const logSpeechTextResults = false;
+const ac3SoundUrl = "https://amf-ms.github.io/AudioAssets/testing/ac3.ac3";
+const mp3SoundUrl = "https://amf-ms.github.io/AudioAssets/testing/mp3-enunciated.mp3";
 
 declare var webkitSpeechRecognition: any;
 declare var webkitSpeechGrammarList: any;
@@ -71,15 +73,16 @@ async function assertSpeechEquals(expected: string): Promise<void> {
 
     speechToText.stop();
     sttOutput = sttOutput.replace(/\s+/g, "");
+    sttOutput = sttOutput.toLowerCase();
 
     if (logSpeechTextResults) {
         console.log("final sttOutput:", sttOutput);
     }
 
     if (sttOutput === expected) {
-        console.log(`${currentTest} passed.`);
+        console.log(`${currentTest} passed speech to text. Got: "${sttOutput}"`);
     } else {
-        console.warn(`${currentTest} failed. Expected: "${expected}", Got: "${sttOutput}"`);
+        console.warn(`${currentTest} failed speech to text. Expected: "${expected}", Got: "${sttOutput}"`);
     }
 }
 
@@ -136,12 +139,31 @@ export async function run() {
     await test_14();
     await test_15();
     await test_16();
+    await test_17();
 
     console.log("");
     console.log("All tests done.");
 
     // speechToText.stop();
     // speechToText.removeEventListener("result", onResult);
+}
+
+async function test_17(): Promise<void> {
+    startTest("test_17");
+
+    const engine = await CreateAudioEngine({ audioContext });
+    const sound = await engine.createSound("", { sourceUrls: [ac3SoundUrl, mp3SoundUrl], playbackRate: 1.3 });
+
+    sound.play();
+    await soundEnded(sound);
+
+    if (!engine.formatIsInvalid("ac3")) {
+        await assertSpeechEquals("ac3");
+    } else {
+        await assertSpeechEquals("mp3");
+    }
+
+    endTest();
 }
 
 /**
