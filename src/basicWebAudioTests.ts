@@ -8,7 +8,19 @@ const testSoundUrl = "https://amf-ms.github.io/AudioAssets/testing/3-count.mp3";
 const logSpeechTextResults = false;
 
 declare var webkitSpeechRecognition: any;
+declare var webkitSpeechGrammarList: any;
 declare var SpeechRecognition: any;
+declare var SpeechGrammarList: any;
+
+function createSpeechGrammarList(): any {
+    if (webkitSpeechGrammarList) {
+        return new webkitSpeechGrammarList();
+    }
+    if (SpeechGrammarList) {
+        return new SpeechGrammarList();
+    }
+    return null;
+}
 
 function createSpeechToTextConverter(): any {
     if (webkitSpeechRecognition) {
@@ -71,7 +83,7 @@ async function assertSpeechEquals(expected: string): Promise<void> {
     }
 }
 
-function startTest(name: string): void {
+function startTest(name: string, expectedPhrase: string | null = null): void {
     console.log("");
     console.log(`${name} ...`);
     currentTest = name;
@@ -80,6 +92,12 @@ function startTest(name: string): void {
     speechToText.lang = "en-US";
     speechToText.continuous = true;
     speechToText.interimResults = true;
+
+    if (expectedPhrase) {
+        const grammarList = createSpeechGrammarList();
+        grammarList.addFromString(`#JSGF V1.0; grammar words; public <word> = ${expectedPhrase};`, 1);
+        speechToText.grammars = grammarList;
+    }
 
     const onResult = (event: any) => {
         sttOutput = "";
