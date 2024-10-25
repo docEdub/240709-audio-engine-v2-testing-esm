@@ -135,7 +135,7 @@ async function test_16(): Promise<void> {
     const engine = await CreateAudioEngine({ audioContext });
     const sound1 = await engine.createSound("", { sourceUrl: testSoundUrl });
     const sound2 = await engine.createSound("", { sourceBuffer: sound1.buffer });
-    await sound1.play();
+    sound1.play();
 
     setTimeout(() => {
         sound2.play();
@@ -175,7 +175,7 @@ async function test_14(): Promise<void> {
 
     const engine = await CreateAudioEngine({ audioContext });
     const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
-    await sound.play();
+    sound.play();
     sound.stop(1.5);
 
     await soundEnded(sound);
@@ -193,7 +193,7 @@ async function test_13(): Promise<void> {
 
     const engine = await CreateAudioEngine({ audioContext });
     const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
-    await sound.play(null, null, 2.2);
+    sound.play(null, null, 2.2);
 
     await soundEnded(sound);
 
@@ -210,7 +210,7 @@ async function test_12(): Promise<void> {
 
     const engine = await CreateAudioEngine({ audioContext });
     const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
-    await sound.play(null, 1);
+    sound.play(null, 1);
 
     await soundEnded(sound);
 
@@ -245,7 +245,7 @@ async function test_10(): Promise<void> {
 
     const engine = await CreateAudioEngine({ audioContext });
     const sound = await engine.createSound("", { sourceUrl: testSoundUrl, playbackRate: 1.05, pitch: 200 });
-    await sound.play();
+    sound.play();
 
     await soundEnded(sound);
 
@@ -262,7 +262,7 @@ async function test_9(): Promise<void> {
 
     const engine = await CreateAudioEngine({ audioContext });
     const sound = await engine.createSound("", { sourceUrl: testSoundUrl, playbackRate: 1.2 });
-    await sound.play();
+    sound.play();
 
     await soundEnded(sound);
 
@@ -279,7 +279,7 @@ async function test_8(): Promise<void> {
 
     const engine = await CreateAudioEngine({ audioContext });
     const sound = await engine.createSound("", { sourceUrl: testSoundUrl, pitch: 300 });
-    await sound.play();
+    sound.play();
 
     await soundEnded(sound);
 
@@ -296,7 +296,7 @@ async function test_7(): Promise<void> {
 
     const engine = await CreateAudioEngine({ audioContext });
     const sound = await engine.createSound("", { sourceUrl: testSoundUrl, loop: true, loopStart: 1, loopEnd: 2 });
-    await sound.play();
+    sound.play();
 
     setTimeout(() => {
         sound.stop();
@@ -317,7 +317,7 @@ async function test_6(): Promise<void> {
 
     const engine = await CreateAudioEngine({ audioContext });
     const sound = await engine.createSound("", { sourceUrl: testSoundUrl, loop: true });
-    await sound.play();
+    sound.play();
 
     setTimeout(() => {
         sound.stop();
@@ -338,7 +338,7 @@ async function test_5(): Promise<void> {
 
     const engine = await CreateAudioEngine({ audioContext });
     const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
-    await sound.play();
+    sound.play();
 
     setTimeout(() => {
         sound.play();
@@ -363,7 +363,7 @@ async function test_4(): Promise<void> {
 
     const engine = await CreateAudioEngine({ audioContext });
     const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
-    await sound.play();
+    sound.play();
 
     setTimeout(() => {
         sound.play();
@@ -386,7 +386,7 @@ async function test_3(): Promise<void> {
 
     return new Promise<void>((resolve) => {
         engine.createSound("", { sourceUrl: testSoundUrl }).then(async (sound) => {
-            await sound.play();
+            sound.play();
             await soundEnded(sound);
 
             await assertSpeechEquals("012");
@@ -405,7 +405,7 @@ async function test_2(): Promise<void> {
 
     const engine = await CreateAudioEngine({ audioContext });
     const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
-    const instance = await sound.play();
+    const instance = sound.play();
     await soundInstanceEnded(instance);
 
     await assertSpeechEquals("012");
