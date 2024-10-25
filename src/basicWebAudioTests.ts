@@ -116,12 +116,55 @@ export async function run() {
     await test_12();
     await test_13();
     await test_14();
+    await test_15();
+    await test_16();
 
     console.log("");
     console.log("All tests done.");
 
     // speechToText.stop();
     // speechToText.removeEventListener("result", onResult);
+}
+
+/**
+ * Create 2 sounds using same buffer and play them 500 ms apart.
+ */
+async function test_16(): Promise<void> {
+    startTest("test_16");
+
+    const engine = await CreateAudioEngine({ audioContext });
+    const sound1 = await engine.createSound("", { sourceUrl: testSoundUrl });
+    const sound2 = await engine.createSound("", { sourceBuffer: sound1.buffer });
+    await sound1.play();
+
+    setTimeout(() => {
+        sound2.play();
+    }, 500);
+
+    await soundEnded(sound1);
+    await soundEnded(sound2);
+
+    await assertSpeechEquals("001122");
+
+    endTest();
+}
+
+/**
+ * Create sound with sourceBuffer set.
+ */
+async function test_15(): Promise<void> {
+    startTest("test_15");
+
+    const engine = await CreateAudioEngine({ audioContext });
+    const buffer = await engine.createSoundBuffer({ sourceUrl: testSoundUrl });
+    const sound = await engine.createSound("", { sourceBuffer: buffer });
+    await sound.play();
+
+    await soundEnded(sound);
+
+    await assertSpeechEquals("012");
+
+    endTest();
 }
 
 /**
