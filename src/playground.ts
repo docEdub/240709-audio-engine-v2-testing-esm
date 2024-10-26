@@ -27,13 +27,13 @@ class Playground {
         light.intensity = 0.7;
 
         // Our built-in 'sphere' shape. Params: name, options, scene
-        var sphere = MeshBuilder.CreateSphere("sphere", {diameter: 2, segments: 32}, scene);
+        var sphere = MeshBuilder.CreateSphere("sphere", { diameter: 2, segments: 32 }, scene);
 
         // Move the sphere upward 1/2 its height
         sphere.position.y = 1;
 
         // Our built-in 'ground' shape. Params: name, options, scene
-        var ground = MeshBuilder.CreateGround("ground", {width: 6, height: 6}, scene);
+        var ground = MeshBuilder.CreateGround("ground", { width: 6, height: 6 }, scene);
 
         // Setup GUI.
         let canvasZone = document.getElementById("canvasZone")!;
@@ -74,15 +74,15 @@ declare var dat: any;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 (() => {
-    const canvas = <HTMLCanvasElement> (document.getElementById("renderCanvas") as unknown);
+    const canvas = <HTMLCanvasElement>(document.getElementById("renderCanvas") as unknown);
     const engine = new Engine(canvas, true);
     const scene = Playground.CreateScene(engine, canvas);
 
-    window.addEventListener('resize', () => {
+    window.addEventListener("resize", () => {
         engine.resize();
     });
 
     engine.runRenderLoop(() => {
-       scene.render(true);
+        scene.render(true);
     });
 })();

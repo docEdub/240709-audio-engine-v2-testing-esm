@@ -1,6 +1,7 @@
 import { AbstractSound } from "@babylonjs/core/Audio/v2/abstractSound";
 import { AbstractSoundInstance } from "@babylonjs/core/Audio/v2/abstractSoundInstance";
 import { CreateAudioEngine } from "@babylonjs/core/Audio/v2/webAudio/webAudioEngine";
+import { Nullable } from "@babylonjs/core/types";
 
 const logSpeechTextResults = false;
 
@@ -55,8 +56,12 @@ async function soundEnded(sound: AbstractSound): Promise<void> {
     });
 }
 
-async function soundInstanceEnded(soundInstance: AbstractSoundInstance): Promise<void> {
+async function soundInstanceEnded(soundInstance: Nullable<AbstractSoundInstance>): Promise<void> {
     return new Promise<void>((resolve) => {
+        if (!soundInstance) {
+            resolve();
+            return;
+        }
         soundInstance.onEndedObservable.addOnce(() => {
             resolve();
         });
@@ -140,14 +145,114 @@ export async function run() {
     await test_15();
     await test_16();
     await test_17();
+    await test_18();
+    await test_19();
+    await test_20();
+    await test_21();
 
     console.log("");
     console.log("All tests done.");
-
-    // speechToText.stop();
-    // speechToText.removeEventListener("result", onResult);
 }
 
+/**
+ * Play sound then pause and resume it's instance.
+ */
+async function test_21(): Promise<void> {
+    startTest("test_21");
+
+    const engine = await CreateAudioEngine({ audioContext });
+    const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
+
+    const instance = sound.play();
+    await new Promise<void>((resolve) => {
+        setTimeout(async () => {
+            instance?.pause();
+            instance?.play();
+            await soundEnded(sound);
+            resolve();
+        }, 1000);
+    });
+
+    await assertSpeechEquals("012");
+
+    endTest();
+}
+
+/**
+ * Play sound then pause and resume it's instance.
+ */
+async function test_20(): Promise<void> {
+    startTest("test_20");
+
+    const engine = await CreateAudioEngine({ audioContext });
+    const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
+
+    const instance = sound.play();
+    await new Promise<void>((resolve) => {
+        setTimeout(async () => {
+            instance?.pause();
+            instance?.resume();
+            await soundEnded(sound);
+            resolve();
+        }, 1000);
+    });
+
+    await assertSpeechEquals("012");
+
+    endTest();
+}
+
+/**
+ * Play sound, pause it, and resume it by calling play.
+ */
+async function test_19(): Promise<void> {
+    startTest("test_19");
+
+    const engine = await CreateAudioEngine({ audioContext });
+    const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
+
+    sound.play();
+    await new Promise<void>((resolve) => {
+        setTimeout(async () => {
+            sound.pause();
+            sound.play();
+            await soundEnded(sound);
+            resolve();
+        }, 1000);
+    });
+
+    await assertSpeechEquals("012");
+
+    endTest();
+}
+
+/**
+ * Play sound, pause it, and resume it.
+ */
+async function test_18(): Promise<void> {
+    startTest("test_18");
+
+    const engine = await CreateAudioEngine({ audioContext });
+    const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
+
+    sound.play();
+    await new Promise<void>((resolve) => {
+        setTimeout(async () => {
+            sound.pause();
+            sound.resume();
+            await soundEnded(sound);
+            resolve();
+        }, 1000);
+    });
+
+    await assertSpeechEquals("012");
+
+    endTest();
+}
+
+/**
+ * Create sound with sourceUrls set to ac3 and mp3 files.
+ */
 async function test_17(): Promise<void> {
     startTest("test_17");
 
