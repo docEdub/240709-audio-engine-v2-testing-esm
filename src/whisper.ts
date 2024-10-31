@@ -2,11 +2,11 @@ declare const Module: any;
 
 const WhisperModule = Module;
 
-let instance = null;
+let instance = 0;
 
 export class Whisper {
     public async init() {
-        loadRemote("whisper-models/ggml-model-whisper-tiny.bin", "whisper.bin", 75, (fname, buf) => {
+        await loadRemote("whisper-models/ggml-model-whisper-tiny.bin", "whisper.bin", 75, (fname, buf) => {
             // write to WASM file using FS_createDataFile
             // if the file exists, delete it
             try {
@@ -20,17 +20,37 @@ export class Whisper {
             //model_whisper = fname;
 
             console.log("loadRemote: stored model: " + fname + " size: " + buf.length);
+
+            if (!instance) {
+                instance = WhisperModule.init("whisper.bin");
+
+                if (instance) {
+                    console.log("js: whisper initialized, instance: " + instance);
+                }
+            }
         });
     }
 
-    public transcribe(): void {
-        if (!instance) {
-            instance = new WhisperModule.init("whisper.bin");
+    public transcribe(audio: Float32Array): any {
+        const ret = WhisperModule.full_default(instance, audio, "en", 8, false);
 
-            if (instance) {
-                console.log("js: whisper initialized, instance: " + instance);
-            }
-        }
+        console.log("js: whisper returned: " + ret);
+        return ret;
+    }
+
+    public async getText(): Promise<string> {
+        return new Promise<string>((resolve) => {
+            const timer = setInterval(async () => {
+                const text = await WhisperModule.get_text(instance);
+
+                // TOOD: Stop trying after some amount of time.
+                if (text) {
+                    clearInterval(timer);
+                    console.log(`RESULT = ${text}`);
+                    resolve(text);
+                }
+            }, 1000);
+        });
     }
 }
 
@@ -112,7 +132,9 @@ async function fetchRemote(url: string): Promise<Uint8Array | null> {
 // load remote data
 // - check if the data is already in the IndexedDB
 // - if not, fetch it from the remote URL and store it in the IndexedDB
-function loadRemote(url, dst, size_mb, cbReady) {
+async function loadRemote(url, dst, size_mb, cbReady): Promise<void> {
+    let resolve: any;
+
     const cbPrint = (msg) => {
         console.log(msg);
     };
@@ -153,6 +175,7 @@ function loadRemote(url, dst, size_mb, cbReady) {
             if (rq.result) {
                 cbPrint('loadRemote: "' + url + '" is already in the IndexedDB');
                 cbReady(dst, rq.result);
+                resolve();
             } else {
                 // data is not in the IndexedDB
                 cbPrint('loadRemote: "' + url + '" is not in the IndexedDB');
@@ -188,6 +211,7 @@ function loadRemote(url, dst, size_mb, cbReady) {
                             rq.onsuccess = function (event) {
                                 cbPrint('loadRemote: "' + url + '" stored in the IndexedDB');
                                 cbReady(dst, data);
+                                resolve();
                             };
 
                             rq.onerror = function (event) {
@@ -220,4 +244,8 @@ function loadRemote(url, dst, size_mb, cbReady) {
         cbPrint("loadRemote: failed to open IndexedDB: abort");
         //cbCancel();
     };
+
+    return new Promise((r) => {
+        resolve = r;
+    });
 }
