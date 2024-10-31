@@ -3,6 +3,8 @@ import { AbstractSoundInstance } from "@babylonjs/core/Audio/v2/abstractSoundIns
 import { CreateAudioEngine } from "@babylonjs/core/Audio/v2/webAudio/webAudioEngine";
 import { Nullable } from "@babylonjs/core/types";
 
+import { Whisper } from "./whisper";
+
 const logSpeechTextResults = false;
 
 const reuseAudioContext = true;
@@ -128,30 +130,32 @@ function endTest(): void {
 }
 
 export async function run() {
-    await test_1();
-    await test_1b();
-    await test_2();
-    await test_3();
-    await test_4();
-    await test_5();
-    await test_6();
-    await test_7();
-    await test_8();
-    await test_9();
-    await test_10();
-    await test_11();
-    await test_12();
-    await test_13();
-    await test_14();
-    await test_15();
-    await test_16();
-    await test_17();
-    await test_17b();
-    await test_18();
-    await test_19();
+    const whisper = new Whisper();
+    whisper.transcribe();
 
-    console.log("");
-    console.log("All tests done.");
+    // await test_1();
+    // await test_1b();
+    // await test_2();
+    // await test_3();
+    // await test_4();
+    // await test_5();
+    // await test_6();
+    // await test_7();
+    // await test_8();
+    // await test_9();
+    // await test_10();
+    // await test_11();
+    // await test_12();
+    // await test_13();
+    // await test_14();
+    // await test_15();
+    // await test_16();
+    // await test_17();
+    // await test_17b();
+    // await test_18();
+    // await test_19();
+    // console.log("");
+    // console.log("All tests done.");
 }
 
 /**

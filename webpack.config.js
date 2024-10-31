@@ -18,6 +18,11 @@ module.exports = {
         extensions: [".tsx", ".ts", ".js"],
     },
     devServer: {
+        headers: {
+            // These are needed to get SharedArrayBuffer working, which is required for Whisper speech-to-text.
+            "Cross-Origin-Embedder-Policy": "require-corp",
+            "Cross-Origin-Opener-Policy": "same-origin",
+        },
         host: "0.0.0.0",
         port: 443,
         static: path.resolve(appDirectory, "public"),
