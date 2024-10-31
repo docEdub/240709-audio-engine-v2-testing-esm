@@ -129,6 +129,7 @@ function endTest(): void {
 
 export async function run() {
     await test_1();
+    await test_1b();
     await test_2();
     await test_3();
     await test_4();
@@ -145,61 +146,12 @@ export async function run() {
     await test_15();
     await test_16();
     await test_17();
+    await test_17b();
     await test_18();
     await test_19();
-    await test_20();
-    await test_21();
 
     console.log("");
     console.log("All tests done.");
-}
-
-/**
- * Play sound then pause and resume it's instance.
- */
-async function test_21(): Promise<void> {
-    startTest("test_21");
-
-    const engine = await CreateAudioEngine({ audioContext });
-    const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
-
-    const instance = sound.play();
-    await new Promise<void>((resolve) => {
-        setTimeout(async () => {
-            instance?.pause();
-            instance?.play();
-            await soundEnded(sound);
-            resolve();
-        }, 1000);
-    });
-
-    await assertSpeechEquals("012");
-
-    endTest();
-}
-
-/**
- * Play sound then pause and resume it's instance.
- */
-async function test_20(): Promise<void> {
-    startTest("test_20");
-
-    const engine = await CreateAudioEngine({ audioContext });
-    const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
-
-    const instance = sound.play();
-    await new Promise<void>((resolve) => {
-        setTimeout(async () => {
-            instance?.pause();
-            instance?.resume();
-            await soundEnded(sound);
-            resolve();
-        }, 1000);
-    });
-
-    await assertSpeechEquals("012");
-
-    endTest();
 }
 
 /**
@@ -251,6 +203,29 @@ async function test_18(): Promise<void> {
 }
 
 /**
+ * Create sound with sourceUrls set to ac3 and mp3 files, with sourceUrlsSkipCodecCheck set to true.
+ * Should throw EncodingError on ac3 file in all browsers other than Safari.
+ */
+async function test_17b(): Promise<void> {
+    startTest("test_17b");
+
+    const engine = await CreateAudioEngine({ audioContext });
+
+    try {
+        const sound = await engine.createSound("", { sourceUrlsSkipCodecCheck: true, sourceUrls: [ac3SoundUrl, mp3SoundUrl], playbackRate: 1.3 });
+    } catch (e) {
+        console.log(`${currentTest} passed. Expected decoding error was thrown.`);
+
+        endTest();
+        return;
+    }
+
+    console.log(`${currentTest} failed. Expected decoding error was not thrown.`);
+
+    endTest();
+}
+
+/**
  * Create sound with sourceUrls set to ac3 and mp3 files.
  */
 async function test_17(): Promise<void> {
@@ -262,7 +237,7 @@ async function test_17(): Promise<void> {
     sound.play();
     await soundEnded(sound);
 
-    if (!engine.formatIsInvalid("ac3")) {
+    if (engine.formatIsValid("ac3")) {
         await assertSpeechEquals("ac3");
     } else {
         await assertSpeechEquals("mp3");
@@ -543,17 +518,32 @@ async function test_3(): Promise<void> {
 }
 
 /**
- * Create sound and call `play` on it using `await`.
+ * Create sound and call `play` on it.
  */
 async function test_2(): Promise<void> {
     startTest("test_2");
 
     const engine = await CreateAudioEngine({ audioContext });
     const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
-    const instance = sound.play();
-    await soundInstanceEnded(instance);
+    sound.play();
+    await soundEnded(sound);
 
     await assertSpeechEquals("012");
+
+    endTest();
+}
+
+/**
+ * Create sound with `autoplay` and `duration` options set.
+ */
+async function test_1b(): Promise<void> {
+    startTest("test_1b");
+
+    const engine = await CreateAudioEngine({ audioContext });
+    const sound = await engine.createSound("", { sourceUrl: testSoundUrl, autoplay: true, duration: 2 });
+    await soundEnded(sound);
+
+    await assertSpeechEquals("01");
 
     endTest();
 }
