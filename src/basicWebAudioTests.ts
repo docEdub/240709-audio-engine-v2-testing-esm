@@ -45,9 +45,9 @@ async function wait(seconds: number): Promise<void> {
     });
 }
 
-let audioContext: AudioContext | undefined = undefined;
+let audioContext: OfflineAudioContext | undefined = undefined;
 if (reuseAudioContext) {
-    audioContext = new AudioContext();
+    audioContext = new OfflineAudioContext(2, 60 * 48000, 48000);
 }
 
 async function soundEnded(sound: AbstractSound): Promise<void> {
