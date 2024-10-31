@@ -59,6 +59,17 @@
             }
         </style>
         <script src="js/dat.gui.0.6.2.min.js"></script>
+
+        <script type="text/javascript">
+            var Module = {
+                print: console.log,
+                printErr: console.log,
+                setStatus: function (text) {
+                    console.log("js: " + text);
+                },
+                monitorRunDependencies: function (left) {},
+            };
+        </script>
         <script src="js/whisper.main.js"></script>
     </head>
     <body>

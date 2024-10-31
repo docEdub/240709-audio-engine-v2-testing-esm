@@ -131,6 +131,7 @@ function endTest(): void {
 
 export async function run() {
     const whisper = new Whisper();
+    await whisper.init();
     whisper.transcribe();
 
     // await test_1();
