@@ -38,16 +38,24 @@ export class Whisper {
         return ret;
     }
 
-    public async getText(): Promise<string> {
+    public async getText(timeout = 5): Promise<string> {
         return new Promise<string>((resolve) => {
+            let attempt = 0;
+
             const timer = setInterval(async () => {
                 const text = await WhisperModule.get_text(instance);
 
-                // TOOD: Stop trying after some amount of time.
                 if (text) {
                     clearInterval(timer);
                     // console.log(`RESULT = ${text}`);
                     resolve(text);
+                } else {
+                    attempt++;
+                    if (attempt >= timeout) {
+                        clearInterval(timer);
+                        console.error("whisper.cpp timed out after " + timeout + " attempts");
+                        resolve("");
+                    }
                 }
             }, 1000);
         });
