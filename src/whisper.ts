@@ -6,7 +6,7 @@ let instance = 0;
 
 export class Whisper {
     public async init() {
-        await loadRemote("whisper-models/ggml-model-whisper-tiny.bin", "whisper.bin", 75, (fname, buf) => {
+        await loadRemote("whisper-models/ggml-model-whisper-tiny.en-q5_1.bin", "whisper.bin", 75, (fname, buf) => {
             // write to WASM file using FS_createDataFile
             // if the file exists, delete it
             try {

@@ -133,8 +133,8 @@ async function assertSpeechEquals(expected: string): Promise<void> {
     // Remove spaces.
     sttOutput = sttOutput.replace(/\s+/g, "");
 
-    // Remove punctuation and parenthesis added by whisper.
-    sttOutput = sttOutput.replace(/(\,|\.|\(|\))/g, "");
+    // Remove punctuation, hyphens and parenthesis added by whisper.
+    sttOutput = sttOutput.replace(/(\,|\.|\-|\(|\))/g, "");
     sttOutput = sttOutput.toLowerCase();
 
     if (sttOutput === expected) {
@@ -194,7 +194,7 @@ export async function run() {
  * Play sound, pause it, and resume it by calling play.
  */
 async function test_19(): Promise<void> {
-    startTest("test_19", 5);
+    startTest("test_19", 4);
 
     const engine = await CreateAudioEngine({ audioContext });
     const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
@@ -220,7 +220,7 @@ async function test_19(): Promise<void> {
  * Play sound, pause it, and resume it.
  */
 async function test_18(): Promise<void> {
-    startTest("test_18", 5);
+    startTest("test_18", 4);
 
     const engine = await CreateAudioEngine({ audioContext });
     const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
