@@ -32,9 +32,9 @@ export class Whisper {
     }
 
     public transcribe(audio: Float32Array): any {
-        const ret = WhisperModule.full_default(instance, audio, "en", 8, false);
+        const ret = WhisperModule.full_default(instance, audio, -1);
 
-        console.log("js: whisper returned: " + ret);
+        // console.log("js: whisper returned: " + ret);
         return ret;
     }
 
@@ -46,7 +46,7 @@ export class Whisper {
                 // TOOD: Stop trying after some amount of time.
                 if (text) {
                     clearInterval(timer);
-                    console.log(`RESULT = ${text}`);
+                    // console.log(`RESULT = ${text}`);
                     resolve(text);
                 }
             }, 1000);

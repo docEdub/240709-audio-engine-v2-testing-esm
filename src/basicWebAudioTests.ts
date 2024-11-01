@@ -110,25 +110,32 @@ async function assertSpeechEquals(expected: string): Promise<void> {
         return;
     }
 
-    console.log(`Rendered buffer length: ${renderedBuffer.length}`);
+    // console.log(`Rendered buffer length: ${renderedBuffer.length}`);
 
     if (downloadAudio) {
         make_download(renderedBuffer, renderedBuffer.length);
     }
 
     const audio = renderedBuffer.getChannelData(0);
-    console.log("js: audio loaded, size: " + audio.length);
+    // console.log("js: audio loaded, size: " + audio.length);
 
     whisper.transcribe(audio);
 
     sttOutput = await whisper.getText();
 
-    sttOutput = sttOutput.replace("[BLANK_AUDIO]", "");
-    sttOutput = sttOutput.trim();
-
     if (logSpeechTextResults) {
-        console.log("final sttOutput:", sttOutput);
+        console.log("raw sttOutput:", sttOutput);
     }
+
+    // Remove the trailing [BLANK_AUDIO] added by whisper.
+    sttOutput = sttOutput.replace("[BLANK_AUDIO]", "");
+
+    // Remove spaces.
+    sttOutput = sttOutput.replace(/\s+/g, "");
+
+    // Remove punctuation and parenthesis added by whisper.
+    sttOutput = sttOutput.replace(/(\,|\.|\(|\))/g, "");
+    sttOutput = sttOutput.toLowerCase();
 
     if (sttOutput === expected) {
         console.log(`${currentTest} passed speech to text. Got: "${sttOutput}"`);
@@ -204,7 +211,7 @@ async function test_19(): Promise<void> {
         audioContext.resume();
     });
 
-    await assertSpeechEquals("0 1 2");
+    await assertSpeechEquals("012");
 
     endTest();
 }
@@ -230,7 +237,7 @@ async function test_18(): Promise<void> {
         audioContext.resume();
     });
 
-    await assertSpeechEquals("0 1 2");
+    await assertSpeechEquals("012");
 
     endTest();
 }
@@ -271,9 +278,9 @@ async function test_17(): Promise<void> {
     await soundEnded(sound);
 
     if (engine.formatIsValid("ac3")) {
-        await assertSpeechEquals("a c 3.");
+        await assertSpeechEquals("ac3");
     } else {
-        await assertSpeechEquals("m p 3.");
+        await assertSpeechEquals("mp3");
     }
 
     endTest();
@@ -298,7 +305,7 @@ async function test_16(): Promise<void> {
     await soundEnded(sound1);
     await soundEnded(sound2);
 
-    await assertSpeechEquals("0 ( 0 1 1 2 2)");
+    await assertSpeechEquals("001122");
 
     endTest();
 }
@@ -316,7 +323,7 @@ async function test_15(): Promise<void> {
 
     await soundEnded(sound);
 
-    await assertSpeechEquals("0 1 2");
+    await assertSpeechEquals("012");
 
     endTest();
 }
@@ -334,7 +341,7 @@ async function test_14(): Promise<void> {
 
     await soundEnded(sound);
 
-    await assertSpeechEquals("0. 1.");
+    await assertSpeechEquals("01");
 
     endTest();
 }
@@ -351,7 +358,7 @@ async function test_13(): Promise<void> {
 
     await soundEnded(sound);
 
-    await assertSpeechEquals("0. 1.");
+    await assertSpeechEquals("01");
 
     endTest();
 }
@@ -368,7 +375,7 @@ async function test_12(): Promise<void> {
 
     await soundEnded(sound);
 
-    await assertSpeechEquals("1 2");
+    await assertSpeechEquals("12");
 
     endTest();
 }
@@ -386,7 +393,7 @@ async function test_11(): Promise<void> {
 
     await soundEnded(sound1);
 
-    await assertSpeechEquals("0 1 2 0 1 2");
+    await assertSpeechEquals("012012");
 
     endTest();
 }
@@ -403,7 +410,7 @@ async function test_10(): Promise<void> {
 
     await soundEnded(sound);
 
-    await assertSpeechEquals("0, 1, 2.");
+    await assertSpeechEquals("012");
 
     endTest();
 }
@@ -420,7 +427,7 @@ async function test_9(): Promise<void> {
 
     await soundEnded(sound);
 
-    await assertSpeechEquals("0, 1, 2.");
+    await assertSpeechEquals("012");
 
     endTest();
 }
@@ -437,7 +444,7 @@ async function test_8(): Promise<void> {
 
     await soundEnded(sound);
 
-    await assertSpeechEquals("0, 1, 2.");
+    await assertSpeechEquals("012");
 
     endTest();
 }
@@ -459,7 +466,7 @@ async function test_7(): Promise<void> {
 
     await soundEnded(sound);
 
-    await assertSpeechEquals("0 1 1");
+    await assertSpeechEquals("011");
 
     endTest();
 }
@@ -481,7 +488,7 @@ async function test_6(): Promise<void> {
 
     await soundEnded(sound);
 
-    await assertSpeechEquals("0 1 2 0");
+    await assertSpeechEquals("0120");
 
     endTest();
 }
@@ -508,7 +515,7 @@ async function test_5(): Promise<void> {
 
     await soundEnded(sound);
 
-    await assertSpeechEquals("0, 0.");
+    await assertSpeechEquals("00");
 
     endTest();
 }
@@ -530,7 +537,7 @@ async function test_4(): Promise<void> {
 
     await soundEnded(sound);
 
-    await assertSpeechEquals("0 ( 0 1 1 2 2)");
+    await assertSpeechEquals("001122");
 
     endTest();
 }
@@ -548,7 +555,7 @@ async function test_3(): Promise<void> {
             sound.play();
             await soundEnded(sound);
 
-            await assertSpeechEquals("0 1 2");
+            await assertSpeechEquals("012");
 
             endTest();
             resolve();
@@ -567,7 +574,7 @@ async function test_2(): Promise<void> {
     sound.play();
     await soundEnded(sound);
 
-    await assertSpeechEquals("0 1 2");
+    await assertSpeechEquals("012");
 
     endTest();
 }
@@ -582,7 +589,7 @@ async function test_1b(): Promise<void> {
     const sound = await engine.createSound("", { sourceUrl: testSoundUrl, autoplay: true, duration: 2 });
     await soundEnded(sound);
 
-    await assertSpeechEquals("0. 1.");
+    await assertSpeechEquals("01");
 
     endTest();
 }
@@ -597,7 +604,7 @@ async function test_1(): Promise<void> {
     const sound = await engine.createSound("", { sourceUrl: testSoundUrl, autoplay: true });
     await soundEnded(sound);
 
-    await assertSpeechEquals("0 1 2");
+    await assertSpeechEquals("012");
 
     endTest();
 }
