@@ -235,10 +235,59 @@ export async function run() {
     await test_17b();
     await test_18();
     await test_19();
+    await test_20();
+    await test_21();
 
     console.log("");
     console.log("All tests done.");
     console.log("");
+}
+
+/**
+ * Create sound with `maxInstances` set to 2.
+ */
+async function test_21(): Promise<void> {
+    startTest("test_21", 4);
+
+    await createAudioEngine({ audioContext });
+    const sound = await createSound({ sourceUrl: testSoundUrl, maxInstances: 2 });
+
+    sound.play();
+    executeCallbackAtTime(0.5, () => {
+        sound.play();
+    });
+    executeCallbackAtTime(2, () => {
+        sound.play();
+    });
+    await soundEnded(sound);
+
+    // Breakdown of the speech output by instance:
+    //           Instance 1: "0 1    "
+    //           Instance 2: " 0 1 2 "
+    //           Instance 3: "    0 1"
+    await assertSpeechEquals("0011021");
+
+    endTest();
+}
+
+/**
+ * Create sound with `maxInstances` set to 1.
+ */
+async function test_20(): Promise<void> {
+    startTest("test_20", 3);
+
+    await createAudioEngine({ audioContext });
+    const sound = await createSound({ sourceUrl: testSoundUrl, maxInstances: 1 });
+
+    sound.play();
+    executeCallbackAtTime(1, () => {
+        sound.play();
+    });
+    await soundEnded(sound);
+
+    await assertSpeechEquals("001");
+
+    endTest();
 }
 
 /**
