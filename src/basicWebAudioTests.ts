@@ -1,8 +1,14 @@
 import { AbstractSound } from "@babylonjs/core/Audio/v2/abstractSound";
-import { CreateAudioEngine } from "@babylonjs/core/Audio/v2/webAudio/webAudioEngine";
+import { CreateAudioEngineAsync } from "@babylonjs/core/Audio/v2/webAudio/webAudioEngine";
+import { CreateSoundAsync, CreateSoundBufferAsync } from "@babylonjs/core/Audio/v2/webAudio/webAudioStaticSound";
 
 import { Whisper } from "./whisper";
+import { Nullable } from "@babylonjs/core/types";
+import { AbstractAudioEngine } from "@babylonjs/core/Audio/v2/abstractAudioEngine";
 
+const useOfflineAudioContext = false;
+const reuseAudioContext = false; // Requires a user interaction on the page for each test.
+const resumeOnInteraction = true;
 const logSpeechTextResults = false;
 const downloadAudio = false;
 
@@ -10,30 +16,47 @@ const testSoundUrl = "https://amf-ms.github.io/AudioAssets/testing/3-count.mp3";
 const ac3SoundUrl = "https://amf-ms.github.io/AudioAssets/testing/ac3.ac3";
 const mp3SoundUrl = "https://amf-ms.github.io/AudioAssets/testing/mp3-enunciated.mp3";
 
-async function wait(seconds: number): Promise<void> {
-    return new Promise<void>((resolve) => {
-        setTimeout(() => {
-            resolve();
-        }, seconds * 1000);
-    });
-}
-
-let audioContext: OfflineAudioContext;
+let audioContext: AudioContext | OfflineAudioContext;
 
 function resetAudioContext(duration: number): void {
-    // Whisper requires 16kHz sample rate.
-    audioContext = new OfflineAudioContext(2, duration * 16000, 16000);
+    if (useOfflineAudioContext) {
+        // Whisper requires 16kHz sample rate.
+        audioContext = new OfflineAudioContext(2, duration * 16000, 16000);
+    } else if (reuseAudioContext) {
+        audioContext = new AudioContext();
+    }
 }
 
 async function soundEnded(sound: AbstractSound): Promise<void> {
     return new Promise<void>((resolve) => {
-        // sound.onEndedObservable.addOnce(() => {
-        resolve();
-        // });
+        if (audioContext instanceof OfflineAudioContext) {
+            resolve();
+        } else if (audioContext instanceof AudioContext || audioContext === undefined) {
+            sound.onEndedObservable.addOnce(() => {
+                resolve();
+            });
+        }
     });
 }
 
-const whisper = new Whisper();
+function executeCallbackAtTime(engine: AbstractAudioEngine, callback: () => void, time: number): void {
+    if (audioContext instanceof OfflineAudioContext) {
+        engine.pause(time).then(() => {
+            callback();
+            engine.resume();
+        });
+    } else {
+        setTimeout(() => {
+            callback();
+        }, time * 1000);
+    }
+}
+
+let whisper: Nullable<Whisper> = null;
+if (useOfflineAudioContext) {
+    whisper = new Whisper();
+}
+
 let currentTest = "";
 let sttOutput = "";
 
@@ -104,7 +127,16 @@ function make_download(abuffer, total_samples) {
 }
 
 async function assertSpeechEquals(expected: string): Promise<void> {
-    const renderedBuffer = await audioContext?.startRendering();
+    if (!(audioContext instanceof OfflineAudioContext)) {
+        console.log(`${currentTest} - done. Expected: "${expected}"`);
+        return;
+    }
+
+    if (!whisper) {
+        throw new Error("Whisper.cpp not initialized");
+    }
+
+    const renderedBuffer = await audioContext.startRendering();
     if (!renderedBuffer) {
         console.log("Failed to render audio buffer");
         return;
@@ -150,19 +182,23 @@ async function assertSpeechEquals(expected: string): Promise<void> {
 }
 
 function startTest(name: string, duration: number = 10): void {
-    console.log("");
-    console.log(`${name} ...`);
+    // console.log("");
+    // console.log(`${name} ...`);
     currentTest = name;
 
     resetAudioContext(duration);
 }
 
 function endTest(): void {
-    console.log(`${currentTest} - done`);
+    // console.log(`${currentTest} - done`);
 }
 
 export async function run() {
-    await whisper.init();
+    if (useOfflineAudioContext) {
+        console.log("");
+        await whisper?.init();
+        console.log("");
+    }
 
     await test_1();
     await test_1b();
@@ -188,6 +224,7 @@ export async function run() {
 
     console.log("");
     console.log("All tests done.");
+    console.log("");
 }
 
 /**
@@ -196,20 +233,28 @@ export async function run() {
 async function test_19(): Promise<void> {
     startTest("test_19", 4);
 
-    const engine = await CreateAudioEngine({ audioContext });
-    const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
+    const engine = await CreateAudioEngineAsync({ audioContext });
+    const sound = await CreateSoundAsync("", engine, { sourceUrl: testSoundUrl });
 
     sound.play();
 
-    audioContext.suspend(1).then(() => {
-        sound.pause();
-        audioContext.resume();
-    });
+    executeCallbackAtTime(
+        engine,
+        () => {
+            sound.pause();
+        },
+        1
+    );
 
-    audioContext.suspend(2).then(() => {
-        sound.play();
-        audioContext.resume();
-    });
+    executeCallbackAtTime(
+        engine,
+        () => {
+            sound.play();
+        },
+        2
+    );
+
+    await soundEnded(sound);
 
     await assertSpeechEquals("012");
 
@@ -222,20 +267,28 @@ async function test_19(): Promise<void> {
 async function test_18(): Promise<void> {
     startTest("test_18", 4);
 
-    const engine = await CreateAudioEngine({ audioContext });
-    const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
+    const engine = await CreateAudioEngineAsync({ audioContext });
+    const sound = await CreateSoundAsync("", engine, { sourceUrl: testSoundUrl });
 
     sound.play();
 
-    audioContext.suspend(1).then(() => {
-        sound.pause();
-        audioContext.resume();
-    });
+    executeCallbackAtTime(
+        engine,
+        () => {
+            sound.pause();
+        },
+        1
+    );
 
-    audioContext.suspend(2).then(() => {
-        sound.resume();
-        audioContext.resume();
-    });
+    executeCallbackAtTime(
+        engine,
+        () => {
+            sound.resume();
+        },
+        2
+    );
+
+    await soundEnded(sound);
 
     await assertSpeechEquals("012");
 
@@ -249,10 +302,10 @@ async function test_18(): Promise<void> {
 async function test_17b(): Promise<void> {
     startTest("test_17b");
 
-    const engine = await CreateAudioEngine({ audioContext });
+    const engine = await CreateAudioEngineAsync({ audioContext });
 
     try {
-        const sound = await engine.createSound("", { sourceUrlsSkipCodecCheck: true, sourceUrls: [ac3SoundUrl, mp3SoundUrl], playbackRate: 1.3 });
+        const sound = await CreateSoundAsync("", engine, { sourceUrlsSkipCodecCheck: true, sourceUrls: [ac3SoundUrl, mp3SoundUrl], playbackRate: 1.3 });
     } catch (e) {
         console.log(`${currentTest} passed. Expected decoding error was thrown.`);
 
@@ -271,8 +324,8 @@ async function test_17b(): Promise<void> {
 async function test_17(): Promise<void> {
     startTest("test_17", 3);
 
-    const engine = await CreateAudioEngine({ audioContext });
-    const sound = await engine.createSound("", { sourceUrls: [ac3SoundUrl, mp3SoundUrl], playbackRate: 1.3 });
+    const engine = await CreateAudioEngineAsync({ audioContext });
+    const sound = await CreateSoundAsync("", engine, { sourceUrls: [ac3SoundUrl, mp3SoundUrl], playbackRate: 1.3 });
 
     sound.play();
     await soundEnded(sound);
@@ -292,15 +345,18 @@ async function test_17(): Promise<void> {
 async function test_16(): Promise<void> {
     startTest("test_16", 4);
 
-    const engine = await CreateAudioEngine({ audioContext });
-    const sound1 = await engine.createSound("", { sourceUrl: testSoundUrl });
-    const sound2 = await engine.createSound("", { sourceBuffer: sound1.buffer });
+    const engine = await CreateAudioEngineAsync({ audioContext });
+    const sound1 = await CreateSoundAsync("", engine, { sourceUrl: testSoundUrl });
+    const sound2 = await CreateSoundAsync("", engine, { sourceBuffer: sound1.buffer });
     sound1.play();
 
-    audioContext.suspend(0.5).then(() => {
-        sound2.play();
-        audioContext.resume();
-    });
+    executeCallbackAtTime(
+        engine,
+        () => {
+            sound2.play();
+        },
+        0.5
+    );
 
     await soundEnded(sound1);
     await soundEnded(sound2);
@@ -316,9 +372,9 @@ async function test_16(): Promise<void> {
 async function test_15(): Promise<void> {
     startTest("test_15", 3);
 
-    const engine = await CreateAudioEngine({ audioContext });
-    const buffer = await engine.createSoundBuffer({ sourceUrl: testSoundUrl });
-    const sound = await engine.createSound("", { sourceBuffer: buffer });
+    const engine = await CreateAudioEngineAsync({ audioContext });
+    const buffer = await CreateSoundBufferAsync(engine, { sourceUrl: testSoundUrl });
+    const sound = await CreateSoundAsync("", engine, { sourceBuffer: buffer });
     await sound.play();
 
     await soundEnded(sound);
@@ -334,8 +390,8 @@ async function test_15(): Promise<void> {
 async function test_14(): Promise<void> {
     startTest("test_14", 3);
 
-    const engine = await CreateAudioEngine({ audioContext });
-    const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
+    const engine = await CreateAudioEngineAsync({ audioContext });
+    const sound = await CreateSoundAsync("", engine, { sourceUrl: testSoundUrl });
     sound.play();
     sound.stop(1.5);
 
@@ -352,8 +408,8 @@ async function test_14(): Promise<void> {
 async function test_13(): Promise<void> {
     startTest("test_13", 3);
 
-    const engine = await CreateAudioEngine({ audioContext });
-    const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
+    const engine = await CreateAudioEngineAsync({ audioContext });
+    const sound = await CreateSoundAsync("", engine, { sourceUrl: testSoundUrl });
     sound.play(null, null, 2.2);
 
     await soundEnded(sound);
@@ -369,8 +425,8 @@ async function test_13(): Promise<void> {
 async function test_12(): Promise<void> {
     startTest("test_12", 3);
 
-    const engine = await CreateAudioEngine({ audioContext });
-    const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
+    const engine = await CreateAudioEngineAsync({ audioContext });
+    const sound = await CreateSoundAsync("", engine, { sourceUrl: testSoundUrl });
     sound.play(null, 1);
 
     await soundEnded(sound);
@@ -386,8 +442,8 @@ async function test_12(): Promise<void> {
 async function test_11(): Promise<void> {
     startTest("test_11", 6);
 
-    const engine = await CreateAudioEngine({ audioContext });
-    const sound1 = await engine.createSound("", { sourceUrl: testSoundUrl });
+    const engine = await CreateAudioEngineAsync({ audioContext });
+    const sound1 = await CreateSoundAsync("", engine, { sourceUrl: testSoundUrl });
     sound1.play();
     sound1.play(3);
 
@@ -404,8 +460,8 @@ async function test_11(): Promise<void> {
 async function test_10(): Promise<void> {
     startTest("test_10", 3);
 
-    const engine = await CreateAudioEngine({ audioContext });
-    const sound = await engine.createSound("", { sourceUrl: testSoundUrl, playbackRate: 1.05, pitch: 200 });
+    const engine = await CreateAudioEngineAsync({ audioContext });
+    const sound = await CreateSoundAsync("", engine, { sourceUrl: testSoundUrl, playbackRate: 1.05, pitch: 200 });
     sound.play();
 
     await soundEnded(sound);
@@ -421,8 +477,8 @@ async function test_10(): Promise<void> {
 async function test_9(): Promise<void> {
     startTest("test_9", 3);
 
-    const engine = await CreateAudioEngine({ audioContext });
-    const sound = await engine.createSound("", { sourceUrl: testSoundUrl, playbackRate: 1.2 });
+    const engine = await CreateAudioEngineAsync({ audioContext });
+    const sound = await CreateSoundAsync("", engine, { sourceUrl: testSoundUrl, playbackRate: 1.2 });
     sound.play();
 
     await soundEnded(sound);
@@ -438,8 +494,8 @@ async function test_9(): Promise<void> {
 async function test_8(): Promise<void> {
     startTest("test_8", 3);
 
-    const engine = await CreateAudioEngine({ audioContext });
-    const sound = await engine.createSound("", { sourceUrl: testSoundUrl, pitch: 300 });
+    const engine = await CreateAudioEngineAsync({ audioContext });
+    const sound = await CreateSoundAsync("", engine, { sourceUrl: testSoundUrl, pitch: 300 });
     sound.play();
 
     await soundEnded(sound);
@@ -455,14 +511,17 @@ async function test_8(): Promise<void> {
 async function test_7(): Promise<void> {
     startTest("test_7", 5);
 
-    const engine = await CreateAudioEngine({ audioContext });
-    const sound = await engine.createSound("", { sourceUrl: testSoundUrl, loop: true, loopStart: 1, loopEnd: 2 });
+    const engine = await CreateAudioEngineAsync({ audioContext });
+    const sound = await CreateSoundAsync("", engine, { sourceUrl: testSoundUrl, loop: true, loopStart: 1, loopEnd: 2 });
     sound.play();
 
-    audioContext.suspend(3.2).then(() => {
-        sound.stop();
-        audioContext.resume();
-    });
+    executeCallbackAtTime(
+        engine,
+        () => {
+            sound.stop();
+        },
+        3.2
+    );
 
     await soundEnded(sound);
 
@@ -477,14 +536,17 @@ async function test_7(): Promise<void> {
 async function test_6(): Promise<void> {
     startTest("test_6", 6);
 
-    const engine = await CreateAudioEngine({ audioContext });
-    const sound = await engine.createSound("", { sourceUrl: testSoundUrl, loop: true });
+    const engine = await CreateAudioEngineAsync({ audioContext });
+    const sound = await CreateSoundAsync("", engine, { sourceUrl: testSoundUrl, loop: true });
     sound.play();
 
-    audioContext.suspend(4.2).then(() => {
-        sound.stop();
-        audioContext.resume();
-    });
+    executeCallbackAtTime(
+        engine,
+        () => {
+            sound.stop();
+        },
+        4.2
+    );
 
     await soundEnded(sound);
 
@@ -499,19 +561,25 @@ async function test_6(): Promise<void> {
 async function test_5(): Promise<void> {
     startTest("test_5", 2);
 
-    const engine = await CreateAudioEngine({ audioContext });
-    const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
+    const engine = await CreateAudioEngineAsync({ audioContext });
+    const sound = await CreateSoundAsync("", engine, { sourceUrl: testSoundUrl });
     sound.play();
 
-    audioContext.suspend(0.5).then(() => {
-        sound.play();
-        audioContext.resume();
-    });
+    executeCallbackAtTime(
+        engine,
+        () => {
+            sound.play();
+        },
+        0.5
+    );
 
-    audioContext.suspend(1.2).then(() => {
-        sound.stop();
-        audioContext.resume();
-    });
+    executeCallbackAtTime(
+        engine,
+        () => {
+            sound.stop();
+        },
+        1.2
+    );
 
     await soundEnded(sound);
 
@@ -526,14 +594,17 @@ async function test_5(): Promise<void> {
 async function test_4(): Promise<void> {
     startTest("test_4", 4);
 
-    const engine = await CreateAudioEngine({ audioContext });
-    const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
+    const engine = await CreateAudioEngineAsync({ audioContext });
+    const sound = await CreateSoundAsync("", engine, { sourceUrl: testSoundUrl });
     sound.play();
 
-    audioContext.suspend(0.5).then(() => {
-        sound.play();
-        audioContext.resume();
-    });
+    executeCallbackAtTime(
+        engine,
+        () => {
+            sound.play();
+        },
+        0.5
+    );
 
     await soundEnded(sound);
 
@@ -548,10 +619,10 @@ async function test_4(): Promise<void> {
 async function test_3(): Promise<void> {
     startTest("test_3", 3);
 
-    const engine = await CreateAudioEngine({ audioContext });
+    const engine = await CreateAudioEngineAsync({ audioContext });
 
     return new Promise<void>((resolve) => {
-        engine.createSound("", { sourceUrl: testSoundUrl }).then(async (sound) => {
+        CreateSoundAsync("", engine, { sourceUrl: testSoundUrl }).then(async (sound) => {
             sound.play();
             await soundEnded(sound);
 
@@ -569,8 +640,8 @@ async function test_3(): Promise<void> {
 async function test_2(): Promise<void> {
     startTest("test_2", 3);
 
-    const engine = await CreateAudioEngine({ audioContext });
-    const sound = await engine.createSound("", { sourceUrl: testSoundUrl });
+    const engine = await CreateAudioEngineAsync({ audioContext });
+    const sound = await CreateSoundAsync("", engine, { sourceUrl: testSoundUrl });
     sound.play();
     await soundEnded(sound);
 
@@ -585,8 +656,8 @@ async function test_2(): Promise<void> {
 async function test_1b(): Promise<void> {
     startTest("test_1b", 2);
 
-    const engine = await CreateAudioEngine({ audioContext });
-    const sound = await engine.createSound("", { sourceUrl: testSoundUrl, autoplay: true, duration: 2 });
+    const engine = await CreateAudioEngineAsync({ audioContext });
+    const sound = await CreateSoundAsync("", engine, { sourceUrl: testSoundUrl, autoplay: true, duration: 2 });
     await soundEnded(sound);
 
     await assertSpeechEquals("01");
@@ -600,8 +671,15 @@ async function test_1b(): Promise<void> {
 async function test_1(): Promise<void> {
     startTest("test_1", 3);
 
-    const engine = await CreateAudioEngine({ audioContext });
-    const sound = await engine.createSound("", { sourceUrl: testSoundUrl, autoplay: true });
+    const engine = await CreateAudioEngineAsync({ audioContext, resumeOnInteraction: resumeOnInteraction });
+
+    if (audioContext instanceof AudioContext && !resumeOnInteraction) {
+        document.addEventListener("click", () => {
+            engine.resume();
+        });
+    }
+
+    const sound = await CreateSoundAsync("", engine, { sourceUrl: testSoundUrl, autoplay: true });
     await soundEnded(sound);
 
     await assertSpeechEquals("012");
