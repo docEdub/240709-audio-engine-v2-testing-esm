@@ -6,7 +6,7 @@ import { Whisper } from "./whisper";
 import { Nullable } from "@babylonjs/core/types";
 import { AbstractAudioEngine } from "@babylonjs/core/Audio/v2/abstractAudioEngine";
 
-const useOfflineAudioContext = false;
+const useOfflineAudioContext = true;
 const reuseAudioContext = false; // Requires a user interaction on the page for each test.
 const resumeOnInteraction = true;
 const logSpeechTextResults = false;
