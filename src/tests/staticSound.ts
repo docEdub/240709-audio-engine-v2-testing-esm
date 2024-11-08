@@ -329,7 +329,7 @@ export async function run() {
         },
         {
             name: "Create sound with `maxInstances` set to 1",
-            duration: 3,
+            duration: 5,
             test: async () => {
                 await createAudioEngine();
                 const sound = await createSound({ source: testSoundUrl, maxInstances: 1 });
@@ -340,19 +340,30 @@ export async function run() {
                 });
                 await soundEnded(sound);
 
-                await assertSpeechEquals("001");
+                await assertSpeechEquals("0012");
             },
         },
         {
             name: "Create sound with `maxInstances` set to 2",
-            duration: 3,
+            duration: 6,
             test: async () => {
                 await createAudioEngine({ resumeOnInteraction: resumeOnInteraction });
-                const sound = await createSound({ source: testSoundUrl, autoplay: true });
+                const sound = await createSound({ source: testSoundUrl, maxInstances: 2 });
 
+                sound.play();
+                executeCallbackAtTime(0.5, () => {
+                    sound.play();
+                });
+                executeCallbackAtTime(2, () => {
+                    sound.play();
+                });
                 await soundEnded(sound);
 
-                await assertSpeechEquals("012");
+                // Breakdown of the speech output by instance:
+                //           Instance 1: "0 1    "
+                //           Instance 2: " 0 1 2 "
+                //           Instance 3: "    0 12"
+                await assertSpeechEquals("00110212");
             },
         },
     ]);
