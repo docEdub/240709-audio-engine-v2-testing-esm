@@ -11,6 +11,8 @@ import {
     testSoundUrl,
 } from "../testUtils";
 
+const createSound = createStreamingSound;
+
 export async function run() {
     await addTests("StreamingSound", [
         {
@@ -18,7 +20,7 @@ export async function run() {
             duration: 3,
             test: async () => {
                 await createAudioEngine({ resumeOnInteraction: resumeOnInteraction });
-                const sound = await createStreamingSound({ source: testSoundUrl, autoplay: true });
+                const sound = await createSound({ source: testSoundUrl, autoplay: true });
 
                 await soundEnded(sound);
 
