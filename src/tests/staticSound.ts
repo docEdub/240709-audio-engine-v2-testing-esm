@@ -3,7 +3,7 @@ import { StaticSound } from "@babylonjs/core/Audio/v2/staticSound";
 import { CreateAudioEngineAsync, IWebAudioEngineOptions } from "@babylonjs/core/Audio/v2/webAudio/webAudioEngine";
 import { CreateSoundAsync, CreateSoundBufferAsync, IWebAudioStaticSoundBufferOptions, IWebAudioStaticSoundOptions } from "@babylonjs/core/Audio/v2/webAudio/webAudioStaticSound";
 import { Nullable } from "@babylonjs/core/types";
-import { Whisper } from "./whisper";
+import { Whisper } from "../whisper";
 import { StaticSoundBuffer } from "@babylonjs/core/Audio/v2/staticSoundBuffer";
 
 const useOfflineAudioContext = true;
