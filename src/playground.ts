@@ -1,11 +1,10 @@
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import { Engine } from "@babylonjs/core/Engines/engine";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
+import "@babylonjs/core/Materials/standardMaterial";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
-import { Logger } from "@babylonjs/core/Misc/logger";
 import { Scene } from "@babylonjs/core/scene";
-import "@babylonjs/core/Materials/standardMaterial";
 
 import * as BasicWebAudioTests from "./basicWebAudioTests";
 
