@@ -1,12 +1,23 @@
 import * as StaticSoundTests from "./tests/staticSound";
 import * as StreamingSoundTests from "./tests/streamingSound";
-import { beforeAllTests, afterAllTests } from "./testUtils";
+import { afterAllTests, afterEachGroup, beforeAllTests, beforeEachGroup } from "./testUtils";
+
+// prettier-ignore
+const groups = [
+    StaticSoundTests,
+    StreamingSoundTests
+];
 
 (async () => {
     await beforeAllTests();
 
-    // await StaticSoundTests.run();
-    await StreamingSoundTests.run();
+    for (const group of groups) {
+        beforeEachGroup();
+
+        await group.run();
+
+        afterEachGroup();
+    }
 
     await afterAllTests();
 })();

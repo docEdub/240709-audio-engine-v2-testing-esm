@@ -35,16 +35,16 @@ export interface ITestConfig {
 
 let currentTest: ITestConfig;
 
-function resetAudioContext(duration: number): void {
+function resetAudioContext(duration: number, force: boolean = false): void {
     if (useOfflineAudioContext) {
         // Whisper requires 16kHz sample rate.
         audioContext = new OfflineAudioContext(2, duration * 16000, 16000);
-    } else if (reuseAudioContext) {
+    } else if (force || (reuseAudioContext && audioContext === undefined)) {
         audioContext = new AudioContext();
     }
 }
 
-function initRealtimeAudioCapture() {
+function initRealtimeAudioCapture(audioContext: AudioContext) {
     if (!(audioContext instanceof AudioContext)) {
         return;
     }
@@ -69,8 +69,9 @@ export async function createAudioEngine(options: Nullable<IWebAudioEngineOptions
 
     audioEngine = await CreateAudioEngineAsync(options);
 
-    if (audioContext instanceof AudioContext) {
-        initRealtimeAudioCapture();
+    const ac = audioContext ?? (await (audioEngine as WebAudioEngine).audioContext);
+    if (ac instanceof AudioContext) {
+        initRealtimeAudioCapture(ac);
     }
 
     return audioEngine;
@@ -291,6 +292,14 @@ export async function afterAllTests() {
     console.log("");
 }
 
+export function beforeEachGroup() {
+    if (!useOfflineAudioContext && reuseAudioContext) {
+        resetAudioContext(0, true);
+    }
+}
+
+export function afterEachGroup() {}
+
 function beforeEachTest(name: string, duration: number = 10): void {
     resetAudioContext(duration);
 }
@@ -310,6 +319,10 @@ export async function addTests(group: string, config: Array<ITestConfig>): Promi
         currentTest = testConfig;
 
         console.log(`${currentGroup} [${i++} of ${config.length}] -> ${currentTest.name}`);
+
+        if (!useOfflineAudioContext && reuseAudioContext && audioContext.state !== "running") {
+            console.log("    - Waiting for user interaction to start audio context.");
+        }
 
         beforeEachTest(name, duration);
         await test();
