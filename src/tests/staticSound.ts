@@ -208,12 +208,6 @@ function endTest(): void {
 }
 
 export async function run() {
-    if (useOfflineAudioContext) {
-        console.log("");
-        await whisper?.init();
-        console.log("");
-    }
-
     await test_1();
     await test_1b();
     await test_2();
@@ -237,10 +231,6 @@ export async function run() {
     await test_19();
     await test_20();
     await test_21();
-
-    console.log("");
-    console.log("All tests done.");
-    console.log("");
 }
 
 /**

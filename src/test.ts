@@ -1,5 +1,12 @@
 import * as StaticSoundTests from "./tests/staticSound";
+import * as StreamingSoundTests from "./tests/streamingSound";
+import { beforeAllTests, afterAllTests } from "./testUtils";
 
-(() => {
-    StaticSoundTests.run();
+(async () => {
+    await beforeAllTests();
+
+    await StaticSoundTests.run();
+    await StreamingSoundTests.run();
+
+    await afterAllTests();
 })();
