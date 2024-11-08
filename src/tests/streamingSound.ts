@@ -20,7 +20,7 @@ export async function run() {
                 await createAudioEngine({ resumeOnInteraction: resumeOnInteraction });
                 const sound = await createStreamingSound({ source: testSoundUrl, autoplay: true });
 
-                // await soundEnded(sound);
+                await soundEnded(sound);
 
                 await assertSpeechEquals("012");
             },
