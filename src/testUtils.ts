@@ -3,7 +3,8 @@ import { AbstractSound } from "@babylonjs/core/Audio/v2/abstractSound";
 import { StaticSound } from "@babylonjs/core/Audio/v2/staticSound";
 import { StaticSoundBuffer } from "@babylonjs/core/Audio/v2/staticSoundBuffer";
 import { StreamingSound } from "@babylonjs/core/Audio/v2/streamingSound";
-import { CreateAudioEngineAsync, IWebAudioEngineOptions } from "@babylonjs/core/Audio/v2/webAudio/webAudioEngine";
+import { CreateAudioEngineAsync, IWebAudioEngineOptions, WebAudioEngine } from "@babylonjs/core/Audio/v2/webAudio/webAudioEngine";
+import { WebAudioMainOutput } from "@babylonjs/core/Audio/v2/webAudio/webAudioMainOutput";
 import { CreateSoundAsync, CreateSoundBufferAsync, IWebAudioStaticSoundBufferOptions, IWebAudioStaticSoundOptions } from "@babylonjs/core/Audio/v2/webAudio/webAudioStaticSound";
 import { CreateStreamingSoundAsync, IWebAudioStreamingSoundOptions } from "@babylonjs/core/Audio/v2/webAudio/webAudioStreamingSound";
 import { Nullable } from "@babylonjs/core/types";
@@ -23,6 +24,17 @@ export const mp3SoundUrl = "https://amf-ms.github.io/AudioAssets/testing/mp3-enu
 let audioContext: AudioContext | OfflineAudioContext;
 let audioEngine: AbstractAudioEngine;
 
+let recorderDestination: MediaStreamAudioDestinationNode;
+let recorder: MediaRecorder;
+
+export interface ITestConfig {
+    name: string;
+    duration?: number;
+    test: () => Promise<void>;
+}
+
+let currentTest: ITestConfig;
+
 function resetAudioContext(duration: number): void {
     if (useOfflineAudioContext) {
         // Whisper requires 16kHz sample rate.
@@ -32,6 +44,23 @@ function resetAudioContext(duration: number): void {
     }
 }
 
+function initRealtimeAudioCapture() {
+    if (!(audioContext instanceof AudioContext)) {
+        return;
+    }
+
+    const webAudioEngine = audioEngine as WebAudioEngine;
+    const webAudioMainOutput = webAudioEngine.mainOutput as WebAudioMainOutput;
+    const nodeToCapture = webAudioMainOutput.webAudioInputNode;
+
+    recorderDestination = new MediaStreamAudioDestinationNode(audioContext);
+    recorder = new MediaRecorder(recorderDestination.stream);
+
+    nodeToCapture.connect(recorderDestination);
+
+    recorder.start();
+}
+
 export async function createAudioEngine(options: Nullable<IWebAudioEngineOptions> = null): Promise<AbstractAudioEngine> {
     if (!options) {
         options = {};
@@ -39,6 +68,10 @@ export async function createAudioEngine(options: Nullable<IWebAudioEngineOptions
     options.audioContext = audioContext;
 
     audioEngine = await CreateAudioEngineAsync(options);
+
+    if (audioContext instanceof AudioContext) {
+        initRealtimeAudioCapture();
+    }
 
     return audioEngine;
 }
@@ -81,11 +114,8 @@ export function executeCallbackAtTime(time: number, callback: () => void): void 
 }
 
 let whisper: Nullable<Whisper> = null;
-if (useOfflineAudioContext) {
-}
 
 let currentGroup = "";
-let currentTest = "";
 let sttOutput = "";
 
 // Convert an AudioBuffer to a Blob using WAVE representation
@@ -149,35 +179,70 @@ function make_download(abuffer, total_samples) {
 
     var download_link = document.createElement("a");
     download_link.href = new_file;
-    var name = `${currentTest}.wav`;
+    var name = `${currentGroup} - ${currentTest.name}.wav`;
     download_link.download = name;
     download_link.click();
 }
 
 export async function assertSpeechEquals(expected: string): Promise<void> {
-    if (!(audioContext instanceof OfflineAudioContext)) {
-        console.log(`    - Done. Expected: "${expected}"`);
-        return;
-    }
-
     if (!whisper) {
         throw new Error("Whisper.cpp not initialized");
     }
 
-    const renderedBuffer = await audioContext.startRendering();
-    if (!renderedBuffer) {
-        console.log("Failed to render audio buffer");
-        return;
+    if (!currentTest.duration) {
+        throw new Error("Test duration not set");
     }
 
-    // console.log(`Rendered buffer length: ${renderedBuffer.length}`);
+    let audio = new Float32Array();
+    let renderedBuffer: AudioBuffer | null = null;
+
+    const audioContext = await (audioEngine as WebAudioEngine).audioContext;
+
+    if (audioContext instanceof OfflineAudioContext) {
+        renderedBuffer = await audioContext.startRendering();
+    } else if (audioContext instanceof AudioContext) {
+        await new Promise<void>((resolve) => {
+            recorder.addEventListener(
+                "dataavailable",
+                async (event) => {
+                    const arrayBuffer = await event.data.arrayBuffer();
+                    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+                    // Convert audio buffer to 16kHz sample rate required by whisper.cpp.
+                    const offlineAudioContext = new OfflineAudioContext(2, audioBuffer.duration * 16000, 16000);
+                    const source = new AudioBufferSourceNode(offlineAudioContext, { buffer: audioBuffer });
+                    source.connect(offlineAudioContext.destination);
+                    source.start();
+                    renderedBuffer = await offlineAudioContext.startRendering();
+
+                    recorderDestination.disconnect();
+
+                    resolve();
+                },
+                { once: true }
+            );
+            recorder.stop();
+        });
+    }
+
+    if (!renderedBuffer) {
+        throw new Error("Failed to render audio buffer");
+    }
+
+    if (renderedBuffer.length === 0) {
+        throw new Error("No audio data to transcribe.");
+    }
+
+    audio = renderedBuffer.getChannelData(0);
+    // console.log("js: audio loaded, size: " + audio.length);
+
+    if (audio.length === 0) {
+        throw new Error("No audio data to transcribe.");
+    }
 
     if (downloadAudio) {
         make_download(renderedBuffer, renderedBuffer.length);
     }
-
-    const audio = renderedBuffer.getChannelData(0);
-    // console.log("js: audio loaded, size: " + audio.length);
 
     whisper.transcribe(audio);
 
@@ -210,7 +275,7 @@ export async function assertSpeechEquals(expected: string): Promise<void> {
 }
 
 export async function beforeAllTests() {
-    if (!whisper && useOfflineAudioContext) {
+    if (!whisper) {
         console.log("");
 
         whisper = new Whisper();
@@ -231,13 +296,7 @@ function beforeEachTest(name: string, duration: number = 10): void {
 }
 
 function afterEachTest(): void {
-    // console.log(`${currentTest} - done`);
-}
-
-export interface ITestConfig {
-    name: string;
-    duration?: number;
-    test: () => Promise<void>;
+    // console.log(`${currentTest.name} - done`);
 }
 
 export async function addTests(group: string, config: Array<ITestConfig>): Promise<void> {
@@ -248,9 +307,9 @@ export async function addTests(group: string, config: Array<ITestConfig>): Promi
         const { name, duration, test } = testConfig;
 
         currentGroup = group;
-        currentTest = name;
+        currentTest = testConfig;
 
-        console.log(`${currentGroup} [${i++} of ${config.length}] -> ${currentTest}`);
+        console.log(`${currentGroup} [${i++} of ${config.length}] -> ${currentTest.name}`);
 
         beforeEachTest(name, duration);
         await test();
