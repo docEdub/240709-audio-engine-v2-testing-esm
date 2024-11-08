@@ -48,9 +48,6 @@ module.exports = {
         ],
     },
     plugins: [
-        new CopyWebpackPlugin({
-            patterns: [{ from: path.resolve("public/js/dat.gui.0.6.2.min.js"), to: "js" }, path.resolve("public/favicon.png")],
-        }),
         new HtmlWebpackPlugin({
             inject: true,
             template: path.resolve(appDirectory, "public/index.html"),
