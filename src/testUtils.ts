@@ -8,13 +8,14 @@ import { StaticSoundBuffer } from "@babylonjs/core/Audio/v2/staticSoundBuffer";
 
 const useOfflineAudioContext = true;
 const reuseAudioContext = false; // Requires a user interaction on the page for each test.
-const resumeOnInteraction = true;
 const logSpeechTextResults = false;
 const downloadAudio = false;
 
-const testSoundUrl = "https://amf-ms.github.io/AudioAssets/testing/3-count.mp3";
-const ac3SoundUrl = "https://amf-ms.github.io/AudioAssets/testing/ac3.ac3";
-const mp3SoundUrl = "https://amf-ms.github.io/AudioAssets/testing/mp3-enunciated.mp3";
+export const resumeOnInteraction = true;
+
+export const testSoundUrl = "https://amf-ms.github.io/AudioAssets/testing/3-count.mp3";
+export const ac3SoundUrl = "https://amf-ms.github.io/AudioAssets/testing/ac3.ac3";
+export const mp3SoundUrl = "https://amf-ms.github.io/AudioAssets/testing/mp3-enunciated.mp3";
 
 let audioContext: AudioContext | OfflineAudioContext;
 let audioEngine: AbstractAudioEngine;
@@ -28,20 +29,26 @@ function resetAudioContext(duration: number): void {
     }
 }
 
-async function createAudioEngine(options: IWebAudioEngineOptions): Promise<AbstractAudioEngine> {
+export async function createAudioEngine(options: Nullable<IWebAudioEngineOptions> = null): Promise<AbstractAudioEngine> {
+    if (!options) {
+        options = {};
+    }
+    options.audioContext = audioContext;
+
     audioEngine = await CreateAudioEngineAsync(options);
+
     return audioEngine;
 }
 
-async function createSound(options: IWebAudioStaticSoundOptions): Promise<StaticSound> {
+export async function createSound(options: IWebAudioStaticSoundOptions): Promise<StaticSound> {
     return await CreateSoundAsync("", audioEngine, options);
 }
 
-async function createSoundBuffer(options: IWebAudioStaticSoundBufferOptions): Promise<StaticSoundBuffer> {
+export async function createSoundBuffer(options: IWebAudioStaticSoundBufferOptions): Promise<StaticSoundBuffer> {
     return await CreateSoundBufferAsync(audioEngine, options);
 }
 
-async function soundEnded(sound: StaticSound): Promise<void> {
+export async function soundEnded(sound: StaticSound): Promise<void> {
     return new Promise<void>((resolve) => {
         if (audioContext instanceof OfflineAudioContext) {
             resolve();
@@ -53,7 +60,7 @@ async function soundEnded(sound: StaticSound): Promise<void> {
     });
 }
 
-function executeCallbackAtTime(time: number, callback: () => void): void {
+export function executeCallbackAtTime(time: number, callback: () => void): void {
     if (audioContext instanceof OfflineAudioContext) {
         audioEngine.pause(time).then(() => {
             callback();
@@ -70,6 +77,7 @@ let whisper: Nullable<Whisper> = null;
 if (useOfflineAudioContext) {
 }
 
+let currentGroup = "";
 let currentTest = "";
 let sttOutput = "";
 
@@ -139,7 +147,7 @@ function make_download(abuffer, total_samples) {
     download_link.click();
 }
 
-async function assertSpeechEquals(expected: string): Promise<void> {
+export async function assertSpeechEquals(expected: string): Promise<void> {
     if (!(audioContext instanceof OfflineAudioContext)) {
         console.log(`${currentTest} - done. Expected: "${expected}"`);
         return;
@@ -183,9 +191,9 @@ async function assertSpeechEquals(expected: string): Promise<void> {
     sttOutput = sttOutput.toLowerCase();
 
     if (sttOutput === expected) {
-        console.log(`${currentTest} passed speech to text. Got: "${sttOutput}"`);
+        console.log(`    - Passed speech to text. Got: "${sttOutput}"`);
     } else {
-        console.warn(`${currentTest} failed speech to text. Expected: "${expected}", Got: "${sttOutput}"`);
+        console.warn(`    - Failed speech to text. Expected: "${expected}", Got: "${sttOutput}"`);
 
         // Download audio if test failed and `downloadAudio` flag is turned off.
         if (!downloadAudio) {
@@ -212,13 +220,33 @@ export async function afterAllTests() {
 }
 
 function beforeEachTest(name: string, duration: number = 10): void {
-    // console.log("");
-    // console.log(`${name} ...`);
-    currentTest = name;
-
     resetAudioContext(duration);
 }
 
 function afterEachTest(): void {
     // console.log(`${currentTest} - done`);
+}
+
+export interface ITestConfig {
+    name: string;
+    duration?: number;
+    test: () => Promise<void>;
+}
+
+export async function addTests(group: string, config: Array<ITestConfig>): Promise<void> {
+    console.log("");
+
+    let i = 1;
+    for (const testConfig of config) {
+        const { name, duration, test } = testConfig;
+
+        currentGroup = group;
+        currentTest = name;
+
+        console.log(`${currentGroup} [${i++} of ${config.length}] -> ${currentTest}`);
+
+        beforeEachTest(name, duration);
+        await test();
+        afterEachTest();
+    }
 }
