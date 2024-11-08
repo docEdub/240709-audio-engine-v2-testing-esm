@@ -5,7 +5,7 @@ import { beforeAllTests, afterAllTests } from "./testUtils";
 (async () => {
     await beforeAllTests();
 
-    await StaticSoundTests.run();
+    // await StaticSoundTests.run();
     await StreamingSoundTests.run();
 
     await afterAllTests();

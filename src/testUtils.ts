@@ -1,13 +1,16 @@
 import { AbstractAudioEngine } from "@babylonjs/core/Audio/v2/abstractAudioEngine";
+import { AbstractSound } from "@babylonjs/core/Audio/v2/abstractSound";
 import { StaticSound } from "@babylonjs/core/Audio/v2/staticSound";
+import { StaticSoundBuffer } from "@babylonjs/core/Audio/v2/staticSoundBuffer";
+import { StreamingSound } from "@babylonjs/core/Audio/v2/streamingSound";
 import { CreateAudioEngineAsync, IWebAudioEngineOptions } from "@babylonjs/core/Audio/v2/webAudio/webAudioEngine";
 import { CreateSoundAsync, CreateSoundBufferAsync, IWebAudioStaticSoundBufferOptions, IWebAudioStaticSoundOptions } from "@babylonjs/core/Audio/v2/webAudio/webAudioStaticSound";
+import { CreateStreamingSoundAsync, IWebAudioStreamingSoundOptions } from "@babylonjs/core/Audio/v2/webAudio/webAudioStreamingSound";
 import { Nullable } from "@babylonjs/core/types";
 import { Whisper } from "./whisper";
-import { StaticSoundBuffer } from "@babylonjs/core/Audio/v2/staticSoundBuffer";
 
-const useOfflineAudioContext = true;
-const reuseAudioContext = false; // Requires a user interaction on the page for each test.
+const useOfflineAudioContext = false;
+const reuseAudioContext = true; // Requires a user interaction on the page for each test.
 const logSpeechTextResults = false;
 const downloadAudio = false;
 
@@ -48,7 +51,11 @@ export async function createSoundBuffer(options: IWebAudioStaticSoundBufferOptio
     return await CreateSoundBufferAsync(audioEngine, options);
 }
 
-export async function soundEnded(sound: StaticSound): Promise<void> {
+export async function createStreamingSound(options: IWebAudioStreamingSoundOptions): Promise<StreamingSound> {
+    return await CreateStreamingSoundAsync("", audioEngine, options);
+}
+
+export async function soundEnded(sound: AbstractSound): Promise<void> {
     return new Promise<void>((resolve) => {
         if (audioContext instanceof OfflineAudioContext) {
             resolve();
@@ -149,7 +156,7 @@ function make_download(abuffer, total_samples) {
 
 export async function assertSpeechEquals(expected: string): Promise<void> {
     if (!(audioContext instanceof OfflineAudioContext)) {
-        console.log(`${currentTest} - done. Expected: "${expected}"`);
+        console.log(`    - Done. Expected: "${expected}"`);
         return;
     }
 

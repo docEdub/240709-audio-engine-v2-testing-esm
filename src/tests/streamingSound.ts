@@ -3,8 +3,7 @@ import {
     addTests,
     assertSpeechEquals,
     createAudioEngine,
-    createSound,
-    createSoundBuffer,
+    createStreamingSound,
     executeCallbackAtTime,
     mp3SoundUrl,
     resumeOnInteraction,
@@ -17,7 +16,14 @@ export async function run() {
         {
             name: "Create sound with `autoplay` option set",
             duration: 3,
-            test: async () => {},
+            test: async () => {
+                await createAudioEngine({ resumeOnInteraction: resumeOnInteraction });
+                const sound = await createStreamingSound({ source: testSoundUrl, autoplay: true });
+
+                // await soundEnded(sound);
+
+                await assertSpeechEquals("012");
+            },
         },
     ]);
 }
