@@ -300,7 +300,7 @@ export async function run() {
                 executeCallbackAtTime(1, () => {
                     sound.pause();
                 });
-                executeCallbackAtTime(2, () => {
+                executeCallbackAtTime(1.5, () => {
                     sound.resume();
                 });
                 await soundEnded(sound);
@@ -319,7 +319,7 @@ export async function run() {
                 executeCallbackAtTime(1, () => {
                     sound.pause();
                 });
-                executeCallbackAtTime(2, () => {
+                executeCallbackAtTime(1.5, () => {
                     sound.play();
                 });
                 await soundEnded(sound);

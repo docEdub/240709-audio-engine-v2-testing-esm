@@ -204,5 +204,74 @@ export async function run() {
                 await assertSpeechEquals("01");
             },
         },
+        {
+            name: "Create sound with source set to ac3 and mp3 files",
+            duration: 3,
+            test: async () => {
+                const engine = await createAudioEngine();
+                const sound = await createSound({ source: [ac3SoundUrl, mp3SoundUrl], playbackRate: 1.3 });
+
+                sound.play();
+                await soundEnded(sound);
+
+                if (engine.formatIsValid("ac3")) {
+                    await assertSpeechEquals("ac3");
+                } else {
+                    await assertSpeechEquals("mp3");
+                }
+            },
+        },
+        {
+            name: "Create sound with source set to HTMLMediaElement",
+            duration: 3,
+            test: async () => {
+                await createAudioEngine();
+                const audio = new Audio(testSoundUrl);
+                const sound = await createSound({ source: audio });
+
+                sound.play();
+                await soundEnded(sound);
+
+                await assertSpeechEquals("012");
+            },
+        },
+        {
+            name: "Play sound, pause it, and resume it",
+            duration: 4,
+            test: async () => {
+                await createAudioEngine();
+                const sound = await createSound({ source: testSoundUrl });
+
+                sound.play();
+                executeCallbackAtTime(1, () => {
+                    sound.pause();
+                });
+                executeCallbackAtTime(1.5, () => {
+                    sound.resume();
+                });
+                await soundEnded(sound);
+
+                await assertSpeechEquals("012");
+            },
+        },
+        {
+            name: "Play sound, pause it, and resume it by calling play",
+            duration: 4,
+            test: async () => {
+                await createAudioEngine();
+                const sound = await createSound({ source: testSoundUrl });
+
+                sound.play();
+                executeCallbackAtTime(1, () => {
+                    sound.pause();
+                });
+                executeCallbackAtTime(1.5, () => {
+                    sound.play();
+                });
+                await soundEnded(sound);
+
+                await assertSpeechEquals("012");
+            },
+        },
     ]);
 }
