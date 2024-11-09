@@ -10,7 +10,16 @@ import { CreateStreamingSoundAsync, IWebAudioStreamingSoundOptions } from "@baby
 import { Nullable } from "@babylonjs/core/types";
 import { Whisper } from "./whisper";
 
-const useOfflineAudioContext = false;
+let useOfflineAudioContext = true;
+
+export function setUseOfflineAudioContext(value: boolean): void {
+    useOfflineAudioContext = value;
+
+    if (!useOfflineAudioContext && reuseAudioContext) {
+        resetAudioContext(0, true);
+    }
+}
+
 const reuseAudioContext = true; // Requires a user interaction on the page for each test.
 const logSpeechTextResults = false;
 const downloadAudio = false;

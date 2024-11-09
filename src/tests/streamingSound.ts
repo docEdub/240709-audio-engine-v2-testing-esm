@@ -7,6 +7,7 @@ import {
     executeCallbackAtTime,
     mp3SoundUrl,
     resumeOnInteraction,
+    setUseOfflineAudioContext,
     soundEnded,
     testSoundUrl,
 } from "../testUtils";
@@ -14,6 +15,8 @@ import {
 const createSound = createStreamingSound;
 
 export async function run() {
+    setUseOfflineAudioContext(false);
+
     await addTests("StreamingSound", [
         {
             name: "Create sound with `autoplay` option set",
