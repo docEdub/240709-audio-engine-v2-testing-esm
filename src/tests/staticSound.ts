@@ -213,14 +213,14 @@ export async function run() {
             },
         },
         {
-            name: "Play sound and call stop with waitTime set to 1.5",
+            name: "Play sound and call stop with waitTime set to 2",
             duration: 3,
             test: async () => {
                 await createAudioEngine();
                 const sound = await createSound({ source: testSoundUrl });
 
                 sound.play();
-                sound.stop(1.5);
+                sound.stop(2);
                 await soundEnded(sound);
 
                 await assertSpeechEquals("01");
