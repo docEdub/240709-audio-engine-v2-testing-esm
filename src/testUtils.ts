@@ -254,7 +254,14 @@ export async function assertSpeechEquals(expected: string): Promise<void> {
         make_download(renderedBuffer, renderedBuffer.length);
     }
 
-    whisper.transcribe(audio);
+    const paddingSamples = currentTest.duration * 16000 - audio.length;
+    if (paddingSamples > 0) {
+        const paddedAudio = new Float32Array(audio.length + paddingSamples);
+        paddedAudio.set(audio);
+        whisper.transcribe(paddedAudio);
+    } else {
+        whisper.transcribe(audio);
+    }
 
     sttOutput = await whisper.getText();
 
