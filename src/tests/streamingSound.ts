@@ -273,5 +273,44 @@ export async function run() {
                 await assertSpeechEquals("012");
             },
         },
+        {
+            name: "Create sound with `maxInstances` set to 1",
+            duration: 6,
+            test: async () => {
+                await createAudioEngine();
+                const sound = await createSound({ source: testSoundUrl, maxInstances: 1 });
+
+                sound.play();
+                executeCallbackAtTime(1, () => {
+                    sound.play();
+                });
+                await soundEnded(sound);
+
+                await assertSpeechEquals("0012");
+            },
+        },
+        {
+            name: "Create sound with `maxInstances` set to 2",
+            duration: 6,
+            test: async () => {
+                await createAudioEngine({ resumeOnInteraction: resumeOnInteraction });
+                const sound = await createSound({ source: testSoundUrl, maxInstances: 2 });
+
+                sound.play();
+                executeCallbackAtTime(0.5, () => {
+                    sound.play();
+                });
+                executeCallbackAtTime(2, () => {
+                    sound.play();
+                });
+                await soundEnded(sound);
+
+                // Breakdown of the speech output by instance:
+                //           Instance 1: "0 1    "
+                //           Instance 2: " 0 1 2 "
+                //           Instance 3: "    0 12"
+                await assertSpeechEquals("00110212");
+            },
+        },
     ]);
 }
