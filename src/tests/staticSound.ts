@@ -19,7 +19,7 @@ export async function run() {
             duration: 3,
             test: async () => {
                 await createAudioEngine({ resumeOnInteraction: resumeOnInteraction });
-                const sound = await createSound({ source: testSoundUrl, autoplay: true });
+                const sound = await createSound(testSoundUrl, { autoplay: true });
 
                 await soundEnded(sound);
 
@@ -31,7 +31,7 @@ export async function run() {
             duration: 2,
             test: async () => {
                 await createAudioEngine();
-                const sound = await createSound({ source: testSoundUrl, autoplay: true, duration: 2 });
+                const sound = await createSound(testSoundUrl, { autoplay: true, duration: 2 });
 
                 await soundEnded(sound);
 
@@ -43,7 +43,7 @@ export async function run() {
             duration: 3,
             test: async () => {
                 await createAudioEngine();
-                const sound = await createSound({ source: testSoundUrl });
+                const sound = await createSound(testSoundUrl);
 
                 sound.play();
                 await soundEnded(sound);
@@ -58,7 +58,7 @@ export async function run() {
                 await createAudioEngine();
 
                 await new Promise<void>((resolve) => {
-                    createSound({ source: testSoundUrl }).then(async (sound) => {
+                    createSound(testSoundUrl).then(async (sound) => {
                         sound.play();
                         await soundEnded(sound);
                         resolve();
@@ -73,7 +73,7 @@ export async function run() {
             duration: 4,
             test: async () => {
                 await createAudioEngine();
-                const sound = await createSound({ source: testSoundUrl });
+                const sound = await createSound(testSoundUrl);
 
                 sound.play();
                 executeCallbackAtTime(0.5, () => {
@@ -89,7 +89,7 @@ export async function run() {
             duration: 2,
             test: async () => {
                 await createAudioEngine();
-                const sound = await createSound({ source: testSoundUrl });
+                const sound = await createSound(testSoundUrl);
 
                 sound.play();
                 executeCallbackAtTime(0.5, () => {
@@ -108,7 +108,7 @@ export async function run() {
             duration: 6,
             test: async () => {
                 await createAudioEngine();
-                const sound = await createSound({ source: testSoundUrl, loop: true });
+                const sound = await createSound(testSoundUrl, { loop: true });
 
                 sound.play();
                 executeCallbackAtTime(4.2, () => {
@@ -124,7 +124,7 @@ export async function run() {
             duration: 5,
             test: async () => {
                 await createAudioEngine();
-                const sound = await createSound({ source: testSoundUrl, loop: true, loopStart: 1, loopEnd: 2 });
+                const sound = await createSound(testSoundUrl, { loop: true, loopStart: 1, loopEnd: 2 });
                 sound.play();
                 executeCallbackAtTime(3.2, () => {
                     sound.stop();
@@ -138,7 +138,7 @@ export async function run() {
             duration: 3,
             test: async () => {
                 await createAudioEngine();
-                const sound = await createSound({ source: testSoundUrl, pitch: 200 });
+                const sound = await createSound(testSoundUrl, { pitch: 200 });
 
                 sound.play();
                 await soundEnded(sound);
@@ -151,7 +151,7 @@ export async function run() {
             duration: 3,
             test: async () => {
                 await createAudioEngine();
-                const sound = await createSound({ source: testSoundUrl, playbackRate: 1.2 });
+                const sound = await createSound(testSoundUrl, { playbackRate: 1.2 });
 
                 sound.play();
                 await soundEnded(sound);
@@ -164,7 +164,7 @@ export async function run() {
             duration: 3,
             test: async () => {
                 await createAudioEngine();
-                const sound = await createSound({ source: testSoundUrl, playbackRate: 1.05, pitch: 200 });
+                const sound = await createSound(testSoundUrl, { playbackRate: 1.05, pitch: 200 });
 
                 sound.play();
                 await soundEnded(sound);
@@ -177,7 +177,7 @@ export async function run() {
             duration: 6,
             test: async () => {
                 await createAudioEngine();
-                const sound1 = await createSound({ source: testSoundUrl });
+                const sound1 = await createSound(testSoundUrl);
 
                 sound1.play();
                 sound1.play(3);
@@ -191,7 +191,7 @@ export async function run() {
             duration: 3,
             test: async () => {
                 await createAudioEngine();
-                const sound = await createSound({ source: testSoundUrl });
+                const sound = await createSound(testSoundUrl);
 
                 sound.play(null, 1);
                 await soundEnded(sound);
@@ -204,7 +204,7 @@ export async function run() {
             duration: 3,
             test: async () => {
                 await createAudioEngine();
-                const sound = await createSound({ source: testSoundUrl });
+                const sound = await createSound(testSoundUrl);
 
                 sound.play(null, null, 2.2);
                 await soundEnded(sound);
@@ -217,7 +217,7 @@ export async function run() {
             duration: 3,
             test: async () => {
                 await createAudioEngine();
-                const sound = await createSound({ source: testSoundUrl });
+                const sound = await createSound(testSoundUrl);
 
                 sound.play();
                 sound.stop(2);
@@ -231,8 +231,8 @@ export async function run() {
             duration: 3,
             test: async () => {
                 await createAudioEngine();
-                const buffer = await createSoundBuffer({ source: testSoundUrl });
-                const sound = await createSound({ source: buffer });
+                const buffer = await createSoundBuffer(testSoundUrl);
+                const sound = await createSound(buffer);
 
                 sound.play();
                 await soundEnded(sound);
@@ -245,8 +245,8 @@ export async function run() {
             duration: 4,
             test: async () => {
                 await createAudioEngine();
-                const sound1 = await createSound({ source: testSoundUrl });
-                const sound2 = await createSound({ source: sound1.buffer });
+                const sound1 = await createSound(testSoundUrl);
+                const sound2 = await createSound(sound1.buffer);
 
                 sound1.play();
                 executeCallbackAtTime(0.5, () => {
@@ -263,7 +263,7 @@ export async function run() {
             duration: 3,
             test: async () => {
                 const engine = await createAudioEngine();
-                const sound = await createSound({ source: [ac3SoundUrl, mp3SoundUrl], playbackRate: 1.3 });
+                const sound = await createSound([ac3SoundUrl, mp3SoundUrl], { playbackRate: 1.3 });
                 sound.play();
                 await soundEnded(sound);
                 if (engine.formatIsValid("ac3")) {
@@ -281,7 +281,7 @@ export async function run() {
                 await createAudioEngine();
 
                 try {
-                    await createSound({ skipCodecCheck: true, source: [ac3SoundUrl, mp3SoundUrl], playbackRate: 1.3 });
+                    await createSound([ac3SoundUrl, mp3SoundUrl], { skipCodecCheck: true, playbackRate: 1.3 });
                 } catch (e) {
                     console.log(`    - Passed. Expected decoding error was thrown.`);
                     return;
@@ -294,7 +294,7 @@ export async function run() {
             duration: 4,
             test: async () => {
                 await createAudioEngine();
-                const sound = await createSound({ source: testSoundUrl });
+                const sound = await createSound(testSoundUrl);
 
                 sound.play();
                 executeCallbackAtTime(1, () => {
@@ -313,7 +313,7 @@ export async function run() {
             duration: 4,
             test: async () => {
                 await createAudioEngine();
-                const sound = await createSound({ source: testSoundUrl });
+                const sound = await createSound(testSoundUrl);
 
                 sound.play();
                 executeCallbackAtTime(1, () => {
@@ -332,7 +332,7 @@ export async function run() {
             duration: 5,
             test: async () => {
                 await createAudioEngine();
-                const sound = await createSound({ source: testSoundUrl, maxInstances: 1 });
+                const sound = await createSound(testSoundUrl, { maxInstances: 1 });
 
                 sound.play();
                 executeCallbackAtTime(1, () => {
@@ -348,7 +348,7 @@ export async function run() {
             duration: 6,
             test: async () => {
                 await createAudioEngine({ resumeOnInteraction: resumeOnInteraction });
-                const sound = await createSound({ source: testSoundUrl, maxInstances: 2 });
+                const sound = await createSound(testSoundUrl, { maxInstances: 2 });
 
                 sound.play();
                 executeCallbackAtTime(0.5, () => {

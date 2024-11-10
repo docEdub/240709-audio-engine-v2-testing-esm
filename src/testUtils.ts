@@ -1,12 +1,12 @@
 import { AbstractAudioEngine } from "@babylonjs/core/Audio/v2/abstractAudioEngine";
 import { AbstractSound } from "@babylonjs/core/Audio/v2/abstractSound";
-import { StaticSound } from "@babylonjs/core/Audio/v2/staticSound";
+import { IStaticSoundOptions, StaticSound } from "@babylonjs/core/Audio/v2/staticSound";
 import { StaticSoundBuffer } from "@babylonjs/core/Audio/v2/staticSoundBuffer";
-import { StreamingSound } from "@babylonjs/core/Audio/v2/streamingSound";
+import { IStreamingSoundOptions, StreamingSound } from "@babylonjs/core/Audio/v2/streamingSound";
 import { CreateAudioEngineAsync, IWebAudioEngineOptions, WebAudioEngine } from "@babylonjs/core/Audio/v2/webAudio/webAudioEngine";
 import { WebAudioMainOutput } from "@babylonjs/core/Audio/v2/webAudio/webAudioMainOutput";
-import { CreateSoundAsync, CreateSoundBufferAsync, IWebAudioStaticSoundBufferOptions, IWebAudioStaticSoundOptions } from "@babylonjs/core/Audio/v2/webAudio/webAudioStaticSound";
-import { CreateStreamingSoundAsync, IWebAudioStreamingSoundOptions } from "@babylonjs/core/Audio/v2/webAudio/webAudioStreamingSound";
+import { CreateSoundAsync, CreateSoundBufferAsync, StaticSoundSourceType } from "@babylonjs/core/Audio/v2/webAudio/webAudioStaticSound";
+import { CreateStreamingSoundAsync, StreamingSoundSourceType } from "@babylonjs/core/Audio/v2/webAudio/webAudioStreamingSound";
 import { Nullable } from "@babylonjs/core/types";
 import { Whisper } from "./whisper";
 
@@ -86,16 +86,16 @@ export async function createAudioEngine(options: Nullable<IWebAudioEngineOptions
     return audioEngine;
 }
 
-export async function createSound(options: IWebAudioStaticSoundOptions): Promise<StaticSound> {
-    return await CreateSoundAsync("", audioEngine, options);
+export async function createSound(source: StaticSoundSourceType, options: Nullable<IStaticSoundOptions> = null): Promise<StaticSound> {
+    return await CreateSoundAsync("", source, audioEngine, options);
 }
 
-export async function createSoundBuffer(options: IWebAudioStaticSoundBufferOptions): Promise<StaticSoundBuffer> {
-    return await CreateSoundBufferAsync(audioEngine, options);
+export async function createSoundBuffer(source: StaticSoundSourceType, options: Nullable<IStaticSoundOptions> = null): Promise<StaticSoundBuffer> {
+    return await CreateSoundBufferAsync(source, audioEngine, options);
 }
 
-export async function createStreamingSound(options: IWebAudioStreamingSoundOptions): Promise<StreamingSound> {
-    return await CreateStreamingSoundAsync("", audioEngine, options);
+export async function createStreamingSound(source: StreamingSoundSourceType, options: Nullable<IStreamingSoundOptions> = null): Promise<StreamingSound> {
+    return await CreateStreamingSoundAsync("", source, audioEngine, options);
 }
 
 export async function soundEnded(sound: AbstractSound): Promise<void> {
